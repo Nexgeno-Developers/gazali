@@ -1032,15 +1032,26 @@ switch ($action) {
             // ORM::get_db()->commit();
             $db = ORM::get_db();
 
-            $db->beginTransaction();
+            try {
+                if (!$db->inTransaction()) {
+                    $db->beginTransaction();
+                }
 
-            $inv_no = ORM::for_table('sys_invoices')->max('invoice_no');
-            $inv_no = (int)$inv_no + 1;
+                $inv_no = ORM::for_table('sys_invoices')->max('invoice_no');
+                $inv_no = (int)$inv_no + 1;
 
-            $inv_prefix = ($company == 1) ? 'PME' : 'AB';
-            $invoicenum = $inv_prefix . $inv_no;
+                $inv_prefix = ($company == 1) ? 'PME' : 'AB';
+                $invoicenum = $inv_prefix . $inv_no;
 
-            $db->commit();
+                if ($db->inTransaction()) {
+                    $db->commit();
+                }
+            } catch (Exception $e) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+                throw $e;
+            }
 
             
             $datetime = date("Y-m-d H:i:s");
