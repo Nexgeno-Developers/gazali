@@ -1055,6 +1055,11 @@ function clean_url($url)
 
  function stock_record($item_id, $stock, $type, $invoice_id = "", $parent_item_id = "", $vendor_id = "", $purchase_price = "", $branch_id = "", $transfer_ref = "")
  {
+    // HARD GUARD: no item, no stock record
+    if (empty($item_id) || (int)$item_id <= 0) {
+        return false;
+    }
+
     $record = ORM::for_table('sys_items_stock')->create();
 
     $record->item_id        = (int)$item_id;
@@ -1071,7 +1076,8 @@ function clean_url($url)
     }
     $record->timestamp      = date('Y-m-d H:i:s'); 
      
-    $record->save();  
+    $record->save();
+    return true;
  }
 
 
