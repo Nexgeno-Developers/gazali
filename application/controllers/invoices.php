@@ -1036,16 +1036,43 @@ switch ($action) {
             $ptoken = _raid(10);
 
             //save sample image
+            // $img_array = array();
+            // for($i=0; $i<count($_FILES['additional_imgs']); $i++ )
+            // {
+            //     if($_FILES['additional_imgs']["name"][$i])
+            //     {
+            //         $filename = 'ui/lib/imgs/additional-img/'.time().$i.'.jpg';
+            //         $img_array[] = $filename;
+            //         move_uploaded_file($_FILES['additional_imgs']["tmp_name"][$i], $filename);
+            //     }                
+            // }
             $img_array = array();
-            for($i=0; $i<count($_FILES['additional_imgs']); $i++ )
-            {
-                if($_FILES['additional_imgs']["name"][$i])
-                {
-                    $filename = 'ui/lib/imgs/additional-img/'.time().$i.'.jpg';
-                    $img_array[] = $filename;
-                    move_uploaded_file($_FILES['additional_imgs']["tmp_name"][$i], $filename);
-                }                
-            } 
+
+            if (
+                isset($_FILES['additional_imgs']['name']) &&
+                is_array($_FILES['additional_imgs']['name'])
+            ) {
+                $imgCount = count($_FILES['additional_imgs']['name']);
+
+                for ($i = 0; $i < $imgCount; $i++) {
+                    if (!empty($_FILES['additional_imgs']['name'][$i])) {
+
+                        $filename = 'ui/lib/imgs/additional-img/' . time() . '_' . $i . '.jpg';
+
+                        if (
+                            isset($_FILES['additional_imgs']['tmp_name'][$i]) &&
+                            is_uploaded_file($_FILES['additional_imgs']['tmp_name'][$i])
+                        ) {
+                            move_uploaded_file(
+                                $_FILES['additional_imgs']['tmp_name'][$i],
+                                $filename
+                            );
+                            $img_array[] = $filename;
+                        }
+                    }
+                }
+            }
+
             		
 			//save to sys_invoices
             $d = ORM::for_table('sys_invoices')->create();
