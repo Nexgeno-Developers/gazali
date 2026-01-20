@@ -2212,9 +2212,9 @@ $inv_prefix = '';
                                 
                                     $d->product_id = ($d->item_type == 'product') ? $_POST['p_id'][$i] : null;
                                     $d->design_id = ($d->item_type == 'design') ? $_POST['p_id'][$i] : null;
-                                    
-                                    stock_record($d->product_id, $d->qty, 'debit', $d->invoiceid , '', '', '', $branch_id, ''); //newly added
-
+                                    if ($d->item_type === 'product') {
+                                        stock_record($d->product_id, $d->qty, 'debit', $d->invoiceid , '', '', '', $branch_id, ''); //newly added
+                                    }
                                     if(!empty($_POST['pimg'][$i]))
                                     {
                                         $get_img = file_get_contents($_SERVER['DOCUMENT_ROOT'].'/'.$_POST['pimg'][$i]);
