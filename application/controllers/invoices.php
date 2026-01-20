@@ -1020,16 +1020,28 @@ switch ($action) {
     		*/
     		
             // Start transaction Lock the table to prevent race conditions
-            ORM::get_db()->beginTransaction();
-            ORM::get_db()->exec("LOCK TABLES sys_invoices WRITE");
+            // ORM::get_db()->beginTransaction();
+            // ORM::get_db()->exec("LOCK TABLES sys_invoices WRITE");
+            // $inv_no = ORM::for_table('sys_invoices')->max('invoice_no');
+			// $inv_no = $inv_no+1;
+			// if($company == 1){
+			// 	$inv_prefix = 'PME';
+			// }
+			// $invoicenum = $inv_prefix.$inv_no;
+            // ORM::get_db()->exec("UNLOCK TABLES");
+            // ORM::get_db()->commit();
+            $db = ORM::get_db();
+
+            $db->beginTransaction();
+
             $inv_no = ORM::for_table('sys_invoices')->max('invoice_no');
-			$inv_no = $inv_no+1;
-			if($company == 1){
-				$inv_prefix = 'PME';
-			}
-			$invoicenum = $inv_prefix.$inv_no;
-            ORM::get_db()->exec("UNLOCK TABLES");
-            ORM::get_db()->commit();
+            $inv_no = (int)$inv_no + 1;
+
+            $inv_prefix = ($company == 1) ? 'PME' : 'AB';
+            $invoicenum = $inv_prefix . $inv_no;
+
+            $db->commit();
+
             
             $datetime = date("Y-m-d H:i:s");
             $vtoken = _raid(10);
