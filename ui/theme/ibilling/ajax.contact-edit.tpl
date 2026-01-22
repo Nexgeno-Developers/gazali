@@ -97,8 +97,8 @@
             </select>
         </div>
     </div>
-
-    <div id="categoryDropdown" class="form-group" style="display: none;">
+    {*
+    <div id="categoryDropdown" class="form-group">
         <label class="col-lg-2 control-label" for="group">{$_L['Category']} </label>
         <div class="col-lg-10">
             <select class="form-control" id="categoryId" name="categoryId" required>
@@ -109,28 +109,28 @@
             </select>
         </div>
     </div>
-    
+    *}
     <script>
-        $(document).ready(function() {
-            // Trigger change event if the selected value is 3
-            if ($('#group').val() === '3') {
-                $('#categoryDropdown').show();
-            } else {
-                $('#categoryDropdown').hide();
-                // Set the value of the category dropdown to empty string to clear selection
-                $('#categoryId').val('');
-            }
+        // $(document).ready(function() {
+        //     // Trigger change event if the selected value is 3
+        //     if ($('#group').val() === '3') {
+        //         $('#categoryDropdown').show();
+        //     } else {
+        //         $('#categoryDropdown').hide();
+        //         // Set the value of the category dropdown to empty string to clear selection
+        //         $('#categoryId').val('');
+        //     }
     
-            $('#group').change(function() {
-                if ($(this).val() === '3') {
-                    $('#categoryDropdown').show();
-                } else {
-                    $('#categoryDropdown').hide();
-                    // Set the value of the category dropdown to empty string to clear selection
-                    $('#categoryId').val('');
-                }
-            });
-        });
+        //     $('#group').change(function() {
+        //         if ($(this).val() === '3') {
+        //             $('#categoryDropdown').show();
+        //         } else {
+        //             $('#categoryDropdown').hide();
+        //             // Set the value of the category dropdown to empty string to clear selection
+        //             $('#categoryId').val('');
+        //         }
+        //     });
+        // });
     </script>
 
     <div class="form-group"><label class="col-md-2 control-label" for="currency">{$_L['Currency']}</label>
@@ -161,7 +161,7 @@
         </div>
     </div>
 		
-    <div class="form-group"><label class="col-lg-2 control-label" for="password">{$_L['Password']} </label>
+    <div class="form-group hide"><label class="col-lg-2 control-label" for="password">{$_L['Password']} </label>
 
         <div class="col-lg-10">
             <input type="password" id="password" name="password" class="form-control">

@@ -202,8 +202,8 @@
                                     </select>
                                 </div>
                             </div>
-
-                            <div id="categoryDropdown" class="form-group" style="display: none;">
+                            {*
+                            <div id="categoryDropdown" class="form-group">
                                 <label class="col-md-4 control-label" for="group">{$_L['Category']} </label>
                                 <div class="col-md-8">
                                     <select class="form-control" id="categoryId" name="categoryId" required>
@@ -214,41 +214,41 @@
                                     </select>
                                 </div>
                             </div>
-                            
+                            *}
                             <script>
-                                $(document).ready(function() {
-                                    // Trigger change event if the selected value is 3
-                                    if ($('#group').val() === '3') {
-                                        $('#categoryDropdown').show();
-                                    } else {
-                                        $('#categoryDropdown').hide();
-                                        // Set the value of the category dropdown to empty string to clear selection
-                                        $('#categoryId').val('');
-                                    }
+                                // $(document).ready(function() {
+                                //     // Trigger change event if the selected value is 3
+                                //     if ($('#group').val() === '3') {
+                                //         $('#categoryDropdown').show();
+                                //     } else {
+                                //         $('#categoryDropdown').hide();
+                                //         // Set the value of the category dropdown to empty string to clear selection
+                                //         $('#categoryId').val('');
+                                //     }
                             
-                                    $('#group').change(function() {
-                                        if ($(this).val() === '3') {
-                                            $('#categoryDropdown').show();
-                                            $('#categoryId').val(1);
-                                        } else {
-                                            $('#categoryDropdown').hide();
-                                            // Set the value of the category dropdown to empty string to clear selection
-                                            $('#categoryId').val('');
-                                        }
-                                    });
-                                });
+                                //     $('#group').change(function() {
+                                //         if ($(this).val() === '3') {
+                                //             $('#categoryDropdown').show();
+                                //             $('#categoryId').val(1);
+                                //         } else {
+                                //             $('#categoryDropdown').hide();
+                                //             // Set the value of the category dropdown to empty string to clear selection
+                                //             $('#categoryId').val('');
+                                //         }
+                                //     });
+                                // });
                             </script>
                             
 							<div class="form-group hide"><label class="col-md-4 control-label" for="tags">{$_L['Tags']}</label>                                <div class="col-lg-8">                                    {*<input type="text" id="tags" name="tags" style="width:100%">*}                                    <select name="tags[]" id="tags" class="form-control" multiple="multiple">                                        {foreach $tags as $tag}                                            <option value="{$tag['text']}">{$tag['text']}</option>                                        {/foreach}                                    </select>                                </div>                            </div>
 
-                            <div class="form-group"><label class="col-md-4 control-label" for="password">{$_L['Password']}</label>
+                            <div class="form-group hide"><label class="col-md-4 control-label" for="password">{$_L['Password']}</label>
 
                                 <div class="col-lg-8"><input type="password" id="password" name="password" class="form-control">
 
                                 </div>
                             </div>
 
-                            <div class="form-group"><label class="col-md-4 control-label" for="cpassword">{$_L['Confirm Password']}</label>
+                            <div class="form-group hide"><label class="col-md-4 control-label" for="cpassword">{$_L['Confirm Password']}</label>
 
                                 <div class="col-lg-8"><input type="password" id="cpassword" name="cpassword" class="form-control">
 
@@ -256,7 +256,7 @@
                             </div>
 
 
-                            <div class="form-group"><label class="col-md-4 control-label" for="send_client_signup_email">{$_L['Welcome Email']}</label>
+                            <div class="form-group hide"><label class="col-md-4 control-label" for="send_client_signup_email">{$_L['Welcome Email']}</label>
 
                                 <div class="col-lg-8">
 

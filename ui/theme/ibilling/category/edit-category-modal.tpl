@@ -25,7 +25,7 @@
                                </div>
                            </div>
                            
-                           <div class="form-group">
+                           <div class="form-group hide">
                                <label class="col-md-4 control-label" for="price">Price</label>
                                <div class="col-lg-8">
                                    <input type="number" id="price" name="price" class="form-control" value="{$category.price}">

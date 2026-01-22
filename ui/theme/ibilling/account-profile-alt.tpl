@@ -47,7 +47,7 @@
 
         <div class="panel-body list-group border-bottom m-t-n-lg">
             <a href="#" id="summary" class="list-group-item active"><span class="fa fa-bar-chart-o"></span> {$_L['Summary']} </a>
-            <a href="#" id="activity" class="list-group-item"><span class="fa fa-tasks"></span> {$_L['Activity']}</a>
+            <a href="#" id="activity" class="hide list-group-item"><span class="fa fa-tasks"></span> {$_L['Activity']}</a>
             <a href="#" id="invoices" class="list-group-item"><span class="fa fa-credit-card"></span> {$_L['Invoices']}<span class="label label-info pull-right">{$inv_count}</span></a>
             <a href="#" id="transactions" class="list-group-item"><span class="fa fa-th-list"></span> {$_L['Transactions']}</a>
             
@@ -55,13 +55,13 @@
                 <a href="#" id="balanceSheetVendor" class="list-group-item"><span class="fa fa-th-list"></span> Balance Sheet</a>
             {/if}            
             
-            <a href="#" id="email" class="list-group-item"><span class="fa fa-envelope-o"></span> {$_L['Email']}</a>
+            <a href="#" id="email" class="hide list-group-item"><span class="fa fa-envelope-o"></span> {$_L['Email']}</a>
             {$extra_tab}
             <a href="#" id="edit" class="list-group-item"><span class="fa fa-pencil"></span> {$_L['Edit']}</a>
             {if $d['gid'] eq 3}
-                <a href="#" id="employee-timesheet" class="list-group-item"><span class="fa fa-clock-o"></span> Timesheet</a>
+                <a href="#" id="employee-timesheet" class="hide list-group-item"><span class="fa fa-clock-o"></span> Timesheet</a>
             {/if}  
-            <a href="#" id="more" class="list-group-item"><span class="fa fa-bars"></span> {$_L['More']}</a>
+            <a href="#" id="more" class="hide list-group-item"><span class="fa fa-bars"></span> {$_L['More']}</a>
         </div>
 
         <div class="panel-body">

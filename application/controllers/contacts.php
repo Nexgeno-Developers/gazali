@@ -130,26 +130,37 @@ case 'category-employee-list':
         break;
     
     case 'addcategoryemployee-post':
-        // Trigger event
         Event::trigger('contacts/addcategoryemployee-post/');
-    
-        // Process form data
-        if(isset($_POST['name'], $_POST['price'], $_POST['status'])) {
-            $categoryName = $_POST['name'];
-            $price = $_POST['price'];
-            $status = $_POST['status'];
-            
-            // Save category to database
-            $newCategory = ORM::for_table('category_employee')->create();
-            $newCategory->name = $categoryName;
-            $newCategory->price = $price;
-            $newCategory->status = $status;
-            $newCategory->save();
-    
-            // Redirect or display success message
-        } else {
-            // Handle invalid form data
+
+        header('Content-Type: application/json');
+
+        $categoryName = _post('name');
+        $status       = _post('status', '1');
+        $price        = _post('price', 0);
+
+        if ($categoryName === '' || $status === '') {
+            http_response_code(400);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'All fields are required.',
+            ]);
+            exit;
         }
+
+        $newCategory = ORM::for_table('category_employee')->create();
+        $newCategory->name   = $categoryName;
+        $newCategory->price  = is_numeric($price) ? $price : 0;
+        $newCategory->status = $status == '1' ? 1 : 0;
+        $newCategory->created_at = date('Y-m-d H:i:s');
+        $newCategory->save();
+
+        echo json_encode([
+            'status'  => 'success',
+            'message' => 'Category created successfully.',
+            'id'      => $newCategory->id,
+        ]);
+        exit;
+
         break;
     
     case 'edit-category-modal':
@@ -161,14 +172,14 @@ case 'category-employee-list':
             // Extract category details
             $id = $existCategory->id;
             $name = $existCategory->name;
-            $price = $existCategory->price;
+            // $price = $existCategory->price;
             $status = $existCategory->status;
             
             // Assign category details to the UI for rendering in the template
             $ui->assign('category', [
                 'id' => $id,
                 'name' => $name,
-                'price' => $price,
+                // 'price' => $price,
                 'status' => $status
             ]);
             
@@ -182,14 +193,14 @@ case 'category-employee-list':
     case 'edit-category-post':
         $category_id   = _post('category_id');
         $categoryName = _post('name');
-        $price = _post('price');
+        // $price = _post('price');
         $status = _post('status');
         $updatedAt   = date('Y-m-d H:i:s');
         
         $existCategory = ORM::for_table('category_employee')->find_one($category_id);
         if($existCategory){
             $existCategory->name = $categoryName;
-            $existCategory->price = $price;
+            // $existCategory->price = $price;
             $existCategory->status = $status;
             $existCategory->updated_at = $updatedAt;
             $existCategory->save();
@@ -1712,8 +1723,9 @@ $i = ORM::for_table('sys_invoices')->where('userid',$cid)->find_many();
             $city = _post('city');
             $state = _post('state');
             $zip = _post('zip');						            
-						$gst = _post('gst');
+            $gst = _post('gst');
             $country = _post('country');
+            $pan = _post('pan');
             $msg = '';
 
             if($account == ''){
@@ -1808,7 +1820,8 @@ $i = ORM::for_table('sys_invoices')->where('userid',$cid)->find_many();
                 $d->address = $address;
                 $d->city = $city;
                 $d->zip = $zip;								                
-								$d->gst_no = $gst;
+                $d->gst_no = $gst;
+                $d->pan = $pan;
                 $d->state = $state;
                 $d->country = $country;
 

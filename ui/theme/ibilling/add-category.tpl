@@ -11,6 +11,7 @@
                 <div class="ibox-content" id="ibox_form">
     
                     <form class="form-horizontal" id="addcategoryemployee-form" method="post">
+                        <input type="hidden" id="_url" name="_url" value="{$_url}">
     <div class="toaster" id="toaster" style="display: none; position: relative; margin: 10px 0;
                 background-color: #51A351; color: #fff; padding: 10px;"></div>
                         <div class="row">
@@ -22,7 +23,7 @@
                                     </div>
                                 </div>
                         
-                                <div class="form-group"><label class="col-md-4 control-label" for="price">Price</label>
+                                <div class="form-group hide"><label class="col-md-4 control-label" for="price">Price</label>
                         
                                     <div class="col-lg-8"><input type="number" id="price" name="price" class="form-control">
                         
@@ -67,20 +68,17 @@
 </div>
 
 <script>
-var baseUrl = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
-var URL = baseUrl + '/?ng=';
+var URL = $("#_url").val() || (window.location.origin + '/');
 
 $(document).on('click', '.addcategoryemployee-post', function(e) {
     e.preventDefault();
     
-    // Check for empty required fields
     var $form = $("#addcategoryemployee-form");
     var $requiredFields = $form.find('[required]');
     var emptyFields = $requiredFields.filter(function() {
         return $(this).val().trim() === '';
     });
     
-    // If there are empty required fields, display alert and focus on the first one
     if (emptyFields.length > 0) {
         alert("Please fill in all the required fields.");
         emptyFields.first().focus();
@@ -88,32 +86,29 @@ $(document).on('click', '.addcategoryemployee-post', function(e) {
     }
     
     var formData = $form.serialize();
-    console.log("Serialized Form Data:", formData);
     
     $.ajax({
         url: URL + 'contacts/addcategoryemployee-post/',
         type: 'POST',
-        data: formData, // Pass formData here
+        data: formData,
+        dataType: 'json',
         success: function(response) {
-            console.log("Success: Response:", response);
-            $("#toaster").html("Category added successfully.").css('background-color', '#51A351').fadeIn().delay(3000).fadeOut();
-            $form[0].reset();
-            // For example, you can reload the page after addition
-            location.reload();
+            var message = response.message || "Category added successfully.";
+            if (response.status === 'success') {
+                $("#toaster").html(message).css('background-color', '#51A351').fadeIn().delay(3000).fadeOut();
+                $form[0].reset();
+                location.reload();
+            } else {
+                $("#toaster").html(message).css('background-color', '#C9302C').fadeIn().delay(3000).fadeOut();
+            }
         },
-        error: function(xhr, status, error) {
-            console.log("Error Response:", error);
-            $("#toaster").html("Error occurred. Please try again.").css('background-color', '#C9302C').fadeIn().delay(3000).fadeOut();
+        error: function(xhr) {
+            var message = "Error occurred. Please try again.";
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            }
+            $("#toaster").html(message).css('background-color', '#C9302C').fadeIn().delay(3000).fadeOut();
         }
-    })
-    .fail(function(jqXHR, textStatus, errorThrown) {
-        console.error("AJAX Request Failed:");
-        console.error("Status:", textStatus);
-        console.error("Error Thrown:", errorThrown);
-        console.error("Response Text:", jqXHR.responseText);
-        console.error("Status Code:", jqXHR.status);
-        console.error("Status Text:", jqXHR.statusText);
-        $("#toaster").html("AJAX request failed. Please try again later.").css('background-color', '#C9302C').fadeIn().delay(3000).fadeOut();
     });
 });
 
