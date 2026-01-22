@@ -6,11 +6,13 @@
             <div class="ibox-title">
                 <h5>Branches</h5>
                 <div class="ibox-tools">
-                    <form class="form-inline" method="get" action="{$_url}branches/list/">
+                    <form class="form-inline" method="get" action="{$app_url}">
+                        <input type="hidden" name="ng" value="branches/list">
                         <div class="input-group">
                             <input type="text" name="q" class="form-control input-sm" placeholder="Search by name, alias or email" value="{$search}">
                             <span class="input-group-btn">
                                 <button class="btn btn-sm btn-primary" type="submit"><i class="fa fa-search"></i></button>
+                                <a class="btn btn-sm btn-default" href="{$_url}branches/list/"><i class="fa fa-undo"></i></a>
                             </span>
                         </div>
                     </form>
