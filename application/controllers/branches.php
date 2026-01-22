@@ -34,10 +34,16 @@ switch ($action) {
         $ui->assign('xfooter', "
 <script>
     $(function() {
-        $('.confirm-delete').on('click', function(e) {
-            if (!confirm($('#_lan_are_you_sure').val())) {
-                e.preventDefault();
-            }
+        $('.cdelete').off('click').on('click', function(e) {
+            e.preventDefault();
+            var id = this.id.replace('bid', '');
+            var lan_msg = $('#_lan_are_you_sure').val();
+            bootbox.confirm(lan_msg, function(result) {
+                if(result){
+                    var _url = $('#_url').val();
+                    window.location.href = _url + 'branches/delete/' + id + '/';
+                }
+            });
         });
     });
 </script>

@@ -51,7 +51,7 @@
                                             <a href="{$_url}branches/edit/{$branch.id}/" class="btn btn-xs btn-primary">
                                                 <i class="fa fa-pencil"></i> Edit
                                             </a>
-                                            <a href="{$_url}branches/delete/{$branch.id}/" class="btn btn-xs btn-danger confirm-delete">
+                                            <a href="#" id="bid{$branch.id}" class="btn btn-xs btn-danger cdelete">
                                                 <i class="fa fa-trash"></i> Delete
                                             </a>
                                         </td>
