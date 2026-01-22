@@ -391,6 +391,12 @@
         </li>
     {/if}
 
+    {if has_access($user->roleid,'branches')}
+        <li class="{if $_application_menu eq 'branches'}active{/if}">
+            <a href="{$_url}branches/list/"><i class="fa fa-sitemap"></i><span class="nav-label">Branches</span></a>
+        </li>
+    {/if}
+
 
     {if has_access($user->roleid,'collection')}
         <li {if $_application_menu eq 'collection'}class="active"{/if}>
