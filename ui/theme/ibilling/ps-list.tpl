@@ -18,6 +18,26 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
+                                <label for="branch_id">Branch</label>
+                                <select name="branch_id" id="branch_id" class="form-control">
+                                    {if $user->roleid eq 0}
+                                        <option value="all">All</option>
+                                        {foreach $branches as $branch}
+                                            <option value="{$branch.id}" {if $branch.id eq $user->branch_id}selected{/if}>{$branch.alias|default:$branch.account}</option>
+                                        {/foreach}
+                                    {else}
+                                        {foreach $branches as $branch}
+                                            {if $branch.id eq $user->branch_id}
+                                                <option value="{$branch.id}" selected>{$branch.alias|default:$branch.account}</option>
+                                            {/if}
+                                        {/foreach}
+                                    {/if}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
                                 <label for="product_type">Product Type</label>
                                 <select name="product_type" id="product_type" class="form-control">
                                     <option value="all">All</option>
@@ -60,6 +80,7 @@
                         <thead>
                             <tr>
                                 <th>#</th>
+                                <th>Branch</th>
                                 <th>{$_L['Item Code']}</th>
                                 <th>{$_L['Item Name']}</th>
                                 <th>Type</th>
@@ -87,10 +108,37 @@
 
 <script>
     var defaultProductType = '{$product_type|escape:"javascript"}';
+    var defaultBranchId = '{if $user->roleid eq 0}all{else}{$user->branch_id}{/if}';
 </script>
 {literal}
 <script>
 $(function(){
+    function gramsToTola(grams){
+        return grams / 11.66;
+    }
+
+    function renderStockWithTola(tableApi){
+        var stockColIndex = 7; // Stock column index (0-based)
+        tableApi.column(stockColIndex, {page:'current'}).nodes().each(function(cell){
+            var $cell = $(cell);
+            if($cell.data('tola-rendered')){
+                return;
+            }
+            var text = $cell.text().trim();
+            var parts = text.split(/\s+/);
+            if(parts.length >= 2){
+                var value = parseFloat(parts[0]);
+                var unit = parts[1].toLowerCase();
+                if(unit === 'gram' && !isNaN(value)){
+                    var tola = gramsToTola(value).toFixed(2);
+                    var html = text + '<br><small class="text-muted">≈ ' + tola + ' tola</small>';
+                    $cell.html(html);
+                    $cell.data('tola-rendered', true);
+                }
+            }
+        });
+    }
+
     var $filters = $('#productFilters');
     var $modal = $('#ajax-modal');
     var defaultType = window.defaultProductType || 'readymade';
@@ -133,11 +181,12 @@ $(function(){
         ],
         order: [[0, 'desc']],
         columnDefs: [
-            { orderable: false, targets: [11] },
-            { className: 'text-right', targets: [4,5] }
+            { orderable: false, targets: [12] },
+            { className: 'text-right', targets: [5,6] }
         ],
         drawCallback: function(){
             attachRowHandlers();
+            renderStockWithTola(table);
         }
     });
 
@@ -149,6 +198,7 @@ $(function(){
     $('#btnProductReset').on('click', function(){
         $filters[0].reset();
         $('#product_type').val(defaultType || 'readymade');
+        $('#branch_id').val(defaultBranchId || 'all');
         table.ajax.reload();
     });
 

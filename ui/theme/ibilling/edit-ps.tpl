@@ -77,10 +77,12 @@
 			<div class="col-lg-3">
 					<select name="product_stock_type" class="form-control">
 						<option value="qty" {if $d['product_stock_type'] eq 'qty'} selected {/if}>Qty</option>
-						<option value="meter" {if $d['product_stock_type'] eq 'meter'} selected {/if}>Meter</option>
-						<option value="packet" {if $d['product_stock_type'] eq 'packet'} selected {/if}>Packet</option>
+						<option value="gram" {if $d['product_stock_type'] eq 'gram'} selected {/if}>Gram (1 tola ≈ 11.66 g)</option>
 					</select>				
 				<!--<input type="text" name="product_stock_type" value="{$d['product_stock_type']}" class="form-control" autocomplete="off" placeholder="e.g : kg, meter, packet">-->
+			</div>
+			<div class="col-lg-offset-2 col-lg-10">
+				<small id="editStockTolaHint" class="text-muted" style="display:none;"></small>
 			</div>
 		</div>
 		<div class="form-group">
@@ -103,3 +105,34 @@
 	<button type="button" data-dismiss="modal" class="btn">{$_L['Close']}</button>
 	<button id="update" class="btn btn-primary">{$_L['Update']}</button>
 </div>
+{literal}
+<script>
+(function(){
+	const gramsPerTola = 11.66;
+	const $form = $('#edit_form');
+	const $stock = $form.find('input[name="product_stock"]');
+	const $unit = $form.find('select[name="product_stock_type"]');
+	const $hint = $('#editStockTolaHint');
+
+	function renderHint(){
+		const unit = $unit.val();
+		const grams = parseFloat($stock.val());
+		if(unit === 'gram'){
+			if(!isNaN(grams)){
+				const tola = grams / gramsPerTola;
+				$hint.text(grams + ' gram ≈ ' + tola.toFixed(2) + ' tola');
+			}else{
+				$hint.text('Enter grams to see value in tola');
+			}
+			$hint.show();
+		}else{
+			$hint.hide();
+		}
+	}
+
+	$unit.on('change', renderHint);
+	$stock.on('input', renderHint);
+	renderHint();
+})();
+</script>
+{/literal}

@@ -1502,3 +1502,10 @@ function update_collection_status($collection_id) {
     $c->updated_at = date('Y-m-d H:i:s');
     $c->save();
 }
+
+if (!function_exists('grams_to_tola')) {
+    function grams_to_tola($grams)
+    {
+        return $grams / 11.66;
+    }
+}

@@ -40,7 +40,7 @@
 
                   <div class="form-group product_category margbtm_5"></div>	
                   
-        		<div class="form-group">
+        		<div class="form-group" id="vendorGroup" style="display:none;">
         			<label class="col-lg-2 control-label" for="vendor_id">Vendor</label>
         			<div class="col-lg-10">
         				<select id="vendorId" name="vendor_id" class="form-control">
@@ -95,10 +95,12 @@
                      <div class="col-lg-3">
                         <select name="product_stock_type" class="form-control">
                             <option value="qty">Qty</option>
-                            <option value="meter">Meter</option>
-                            <option value="packet">Packet</option>
+                            <option value="gram">Gram (1 tola ≈ 11.66 g)</option>
                         </select>
                         <!--<input type="text" name="product_stock_type" class="form-control" autocomplete="off" placeholder="e.g : kg, meter, packet">-->
+                     </div>
+                     <div class="col-lg-offset-2 col-lg-10">
+                        <small id="stockTolaHint" class="text-muted" style="display:none;"></small>
                      </div>					 
                   </div>
                   <div class="form-group">
@@ -149,6 +151,7 @@ function get_category(val)
         $('#ready_img').attr('src', '');
         $('input[name="ready_img"]').val('');        
         
+        $("#vendorGroup").show();
         $("#vendorId").prop("disabled", false);
 
 	}
@@ -161,13 +164,39 @@ function get_category(val)
         $("#vendorId").val($("#vendorId option:first").val());
         
         // Disable the select element
-        $("#vendorId").prop("disabled", true);        
+        $("#vendorId").prop("disabled", true);
+        $("#vendorGroup").hide();        
     }
 
 }
 
 $(document).ready(function(){
+        const gramsPerTola = 11.66;
+        const $stockInput = $('input[name=\"product_stock\"]');
+        const $unitSelect = $('select[name=\"product_stock_type\"]');
+        const $tolaHint = $('#stockTolaHint');
+
+        function renderTolaHint(){
+            const unit = $unitSelect.val();
+            const grams = parseFloat($stockInput.val());
+            if(unit === 'gram'){
+                if(!isNaN(grams)){
+                    const tola = grams / gramsPerTola;
+                    $tolaHint.text(grams + ' gram ≈ ' + tola.toFixed(2) + ' tola');
+                }else{
+                    $tolaHint.text('Enter grams to see value in tola');
+                }
+                $tolaHint.show();
+            }else{
+                $tolaHint.hide();
+            }
+        }
+
+        $stockInput.on('input', renderTolaHint);
+        $unitSelect.on('change', renderTolaHint);
+
         get_category('');
+        renderTolaHint();
     });
 </script>
 

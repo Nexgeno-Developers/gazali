@@ -22,7 +22,7 @@ switch ($action) {
 
     case 'add-design':
         
-        if(!has_access($user->roleid, 'products_n_services') || $user->roleid != 0) {
+        if(!has_access($user->roleid, 'products_n_services')) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
 
@@ -293,10 +293,10 @@ switch ($action) {
             $qr_link = '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>';
 
             $actions = '<a href="'. U .'manage/view/'. $r['id'] .'" class="btn btn-success btn-xs"><i class="fa fa-bar-chart"></i> History</a> ';
-            if($user->roleid == 0){
+            // if($user->roleid == 0){
                 $actions .= '<a href="#" class="btn btn-primary btn-xs cedit" data-id="'.$r['id'].'"><i class="fa fa-pencil"></i> Edit</a> ';
                 $actions .= '<a href="#" class="btn btn-danger btn-xs cdelete cdelete-design" data-id="'.$r['id'].'"><i class="fa fa-trash"></i> Delete</a>';
-            }
+            // }
 
             $data[] = [
                 $serial,

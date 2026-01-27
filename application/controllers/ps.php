@@ -107,7 +107,7 @@ switch ($action) {
 
     case 'p-new':
 
-        if(!has_access($user->roleid, 'products_n_services') || $user->roleid != 0) {
+        if(!has_access($user->roleid, 'products_n_services')) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
 
@@ -139,7 +139,7 @@ switch ($action) {
 
 
     case 's-new':
-        if(!has_access($user->roleid, 'products_n_services') || $user->roleid != 0) {
+        if(!has_access($user->roleid, 'products_n_services')) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
 
@@ -500,8 +500,12 @@ switch ($action) {
             ->order_by_asc('product_category')
             ->find_array();
 
+        // Branch list for filter
+        $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
+
         $ui->assign('product_type', $product_type);
         $ui->assign('categories', $categories);
+        $ui->assign('branches', $branches);
         $ui->assign('type','Product');
 
         $ui->assign('xheader', Asset::css(['datatables.min', 'buttons.dataTables.min', 'modal']));
@@ -521,17 +525,19 @@ switch ($action) {
 
         // column index -> db column mapping for ordering
         $columns = [
-            0 => 'i.id',
-            1 => 'i.item_number',
-            2 => 'i.name',
-            3 => 'i.product_type',
-            4 => 'i.purchase_price',
-            5 => 'i.sales_price',
-            6 => 'i.product_stock',
-            7 => 'i.product_category',
-            8 => 'i.product_image',
-            9 => 'i.description',
-            10 => 'i.id'
+            0  => 'i.id',
+            1  => 'i.id',             // branch column (computed)
+            2  => 'i.item_number',
+            3  => 'i.name',
+            4  => 'i.product_type',
+            5  => 'i.purchase_price',
+            6  => 'i.sales_price',
+            7  => 'i.product_stock',
+            8  => 'i.product_category',
+            9  => 'i.product_image',
+            10 => 'i.description',
+            11 => 'i.id',            // QR
+            12 => 'i.id'             // Manage
         ];
 
         $length = isset($request['length']) ? (int)$request['length'] : 25;
@@ -548,6 +554,11 @@ switch ($action) {
         $product_type = !empty($request['product_type']) ? $request['product_type'] : 'readymade';
         if ($product_type !== 'all') {
             $base_q->where('i.product_type', $product_type);
+        }
+
+        $branch_id = isset($request['branch_id']) ? trim($request['branch_id']) : '';
+        if ($branch_id !== '' && $branch_id !== 'all') {
+            $base_q->where_raw('EXISTS (SELECT 1 FROM sys_items_stock sis WHERE sis.item_id = i.id AND sis.branch_id = ?)', [$branch_id]);
         }
 
         if (!empty($request['product_category'])) {
@@ -584,6 +595,25 @@ switch ($action) {
             $stock = isset($stock_info['current_stock_count']) ? $stock_info['current_stock_count'] : 0;
             $stock_label = $stock . ' ' . $r['product_stock_type'];
 
+            // Branch summary
+            $branch_stock = product_stock_info_by_branch($r['id']);
+            $branch_labels = [];
+            foreach ($branch_stock as $bid => $qty) {
+                if ($bid === null || $bid === '') {
+                    continue;
+                }
+                // Prefer alias; fall back to account name; finally branch id
+                $branch_name = get_branch_name($bid, 'alias');
+                if (!$branch_name) {
+                    $branch_name = get_branch_name($bid, 'account');
+                }
+                if (!$branch_name) {
+                    $branch_name = $bid;
+                }
+                $branch_labels[] = $branch_name;
+            }
+            $branch_text = !empty($branch_labels) ? implode(', ', $branch_labels) : '-';
+
             $img_link = (!empty($r['product_image'])) ? '<a target="_blank" href="'.$r['product_image'].'">View</a>' : '-';
 
             $desc = !empty($r['description']) ? htmlspecialchars($r['description'], ENT_QUOTES, 'UTF-8') : '-';
@@ -592,14 +622,15 @@ switch ($action) {
             $qr_link = '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>';
 
             $actions = '<a href="'. U .'ps/view/'. $r['id'] .'" class="btn btn-success btn-xs"><i class="fa fa-bar-chart"></i> Stock History</a> ';
-            if ($user->roleid == 0) {
+            // if ($user->roleid == 0) {
                 $actions .= '<a href="#" class="btn btn-warning btn-xs cedit_stock" data-id="'.$r['id'].'"><i class="fa fa-plus"></i> Add Stock</a> ';
                 $actions .= '<a href="#" class="btn btn-primary btn-xs cedit" data-id="'.$r['id'].'"><i class="fa fa-pencil"></i> Edit</a> ';
                 $actions .= '<a href="#" class="btn btn-danger btn-xs cdelete cdelete-product" data-id="'.$r['id'].'" data-filter="'.$r['product_type'].'"><i class="fa fa-trash"></i> Delete</a>';
-            }
+            // }
 
             $data[] = [
                 $serial,
+                htmlspecialchars($branch_text, ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($r['item_number'], ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($r['name'], ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($r['product_type'], ENT_QUOTES, 'UTF-8'),
