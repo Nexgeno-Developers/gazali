@@ -373,7 +373,7 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 					</th>
 					
 					<th id="cell-item" class="text-semibold" width="20%">
-						Design
+						Gift Box
 					</th>
 
 					<!--<th id="cell-qty" class="text-center text-semibold" width="10%">

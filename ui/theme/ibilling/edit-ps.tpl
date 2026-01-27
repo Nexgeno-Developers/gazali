@@ -37,7 +37,7 @@
 		</div>
 		{else}
 		<div class="form-group">
-			<label for="name" class="col-sm-2 control-label">Design</label>
+			<label for="name" class="col-sm-2 control-label">Gift Box</label>
 			<div class="col-sm-10">
 				<input type="text" class="form-control" value="{get_type_by_id('sys_designs', 'id', $d['design_id'], 'name')}" readonly>
 			</div>

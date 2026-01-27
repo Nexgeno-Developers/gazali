@@ -4,11 +4,11 @@
     <div class="col-md-12">
         <div class="ibox float-e-margins">
             <div class="ibox-title">
-                <h5>List Design</h5>
+                <h5>List Gift Box</h5>
                 {if $user->roleid eq 0}
                     <div class="ibox-tools">
                         <a href="{$_url}manage/add-design" class="btn btn-primary btn-xs">
-                            <i class="fa fa-plus"></i> Add Design</a>
+                            <i class="fa fa-plus"></i> Add Gift Box</a>
                     </div>
                 {/if}
             </div>
@@ -19,11 +19,11 @@
                         {*
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="design_name">Design Name</label>
+                                <label for="design_name">Gift Box Name</label>
                                 <input type="text" name="design_name" id="design_name" class="form-control" placeholder="Search name">
                             </div>
                         </div>
-                        *}
+                        
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="cloth_id">Cloth</label>
@@ -34,7 +34,7 @@
                                     {/foreach}
                                 </select>
                             </div>
-                        </div>
+                        </div>*}
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="min_price">Min Price</label>
@@ -63,7 +63,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Name</th>
-                                <th>Cloth</th>
+                                {* <th>Cloth</th> *}
                                 <th>Silai Price</th>
                                 <th>Image</th>
                                 <th>QRCode</th>
@@ -124,8 +124,8 @@ $(function(){
         ],
         order: [[0, 'desc']],
         columnDefs: [
-            { orderable: false, targets: [6] },
-            { className: 'text-right', targets: [3,6] }
+            { orderable: false, targets: [5] },
+            { className: 'text-right', targets: [3,5] }
         ],
         drawCallback: function(){
             attachRowHandlers();

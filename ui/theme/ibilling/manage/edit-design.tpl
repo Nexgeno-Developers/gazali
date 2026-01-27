@@ -19,6 +19,7 @@
 				<input type="text" class="form-control" value="{$d['name']}" name="name" id="name">
 			</div>
 		</div>
+		{*
 		<div class="form-group">
 			<label for="rate" class="col-sm-2 control-label">Sale Price</label>
 			<div class="col-sm-10">
@@ -26,6 +27,7 @@
 
 			</div>
 		</div>
+		*}
 		<div class="form-group">
 			<label class="col-lg-2 control-label" for="design_images">Product Image</label>
 			<div class="col-lg-7">

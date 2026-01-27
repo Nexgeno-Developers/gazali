@@ -185,7 +185,7 @@ input[type=number]::-webkit-outer-spin-button {
 								</div>
 								<div class="col-md-3">
 									<select id="design_id" class="form-control drop-dn" name="design_id">
-										<option value="">Select Design</option>
+										<option value="">Select Gift Box</option>
 										{*foreach $designs as $design}
 										<option value="{$design['id']}">{$design['name']}</option>
 										{/foreach*}

@@ -363,7 +363,7 @@ if(add_option('hide_footer','0')){
 }
 
 if(add_option('design','default')){
-    $msg .= 'Design row is created
+    $msg .= 'Gift Box row is created
 ';
 }
 

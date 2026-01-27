@@ -157,7 +157,7 @@ function get_category(val)
 	}
 	else
 	{
-        $('.product_category').html('<label class="col-lg-2 control-label" for="design_id">Select Design</label><div class="col-lg-10"> <select id="design_id" name="design_id" class="form-control"><option value="">--Select design--</option>{foreach get_designs() as $row}<option value="{$row["id"]}">{$row["name"]}</option>{/foreach}</select></div>');
+        $('.product_category').html('<label class="col-lg-2 control-label" for="design_id">Select Gift Box</label><div class="col-lg-10"> <select id="design_id" name="design_id" class="form-control"><option value="">--Select design--</option>{foreach get_designs() as $row}<option value="{$row["id"]}">{$row["name"]}</option>{/foreach}</select></div>');
         $('#design_id').select2();
         
         // Reset the select element to its default option (first option in this case)

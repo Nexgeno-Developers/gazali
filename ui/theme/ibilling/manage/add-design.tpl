@@ -14,7 +14,7 @@
          <div class="ibox float-e-margins">
             <div class="ibox-title">
                <h5>
-                  Add Design
+                  Add Gift Box
                </h5>
                <div class="ibox-tools">
                   <a href="{$_url}manage/list-design" class="btn btn-primary btn-xs">List Designs</a>
@@ -26,11 +26,12 @@
                </div>
                <form class="form-horizontal" id="rform">				  	  
                   <div class="form-group">
-                     <label class="col-lg-2 control-label" for="name">Design Name</label>
+                     <label class="col-lg-2 control-label" for="name">Gift Box Name</label>
                      <div class="col-lg-10">
                         <input type="text" id="name" name="name" class="form-control" autocomplete="off">
                      </div>
                   </div>
+                  {*
                   <div class="form-group">
                      <label class="col-lg-2 control-label" for="sales_price">Silai price</label>
                      <div class="col-lg-10">
@@ -38,8 +39,9 @@
                            data-a-dec="{$_c['dec_point']}" data-a-sep="{$_c['thousands_sep']}" data-d-group="2">
                      </div>
                   </div>
+                  *}
                   <div class="form-group">
-                     <label class="col-lg-2 control-label" for="design_images">Design Images</label>
+                     <label class="col-lg-2 control-label" for="design_images">Gift Box Images</label>
                      <div class="col-lg-10">
                         <input type="file" id="design_images" name="design_images[]" class="form-control" autocomplete="off" accept="image/*">
                      </div>

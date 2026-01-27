@@ -218,10 +218,10 @@
 
     {if has_access($user->roleid,'products_n_services')}
     <li class="{if $_application_menu eq 'manage'}active{/if}">
-            <a href="#"><i class="fa fa-cube"></i> <span class="nav-label">Manage Design</span><span class="fa arrow"></span></a>
+            <a href="#"><i class="fa fa-cube"></i> <span class="nav-label">Manage Gift Box</span><span class="fa arrow"></span></a>
             <ul class="nav nav-second-level">
-                    <li><a href="{$_url}manage/add-design/">Add Design</a></li>
-                <li><a href="{$_url}manage/list-design/">List Design</a></li>
+                    <li><a href="{$_url}manage/add-design/">Add Gift Box</a></li>
+                <li><a href="{$_url}manage/list-design/">List Gift Box</a></li>
             </ul>
         </li>
         {/if}

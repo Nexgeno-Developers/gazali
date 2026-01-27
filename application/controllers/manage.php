@@ -1,8 +1,8 @@
 <?php
 _auth();
 $ui->assign('_application_menu', 'manage');
-$ui->assign('_title', 'Designs'.'- '. $config['CompanyName']);
-$ui->assign('_st', 'Designs');
+$ui->assign('_title', 'Gift Box'.'- '. $config['CompanyName']);
+$ui->assign('_st', 'Gift Box');
 $action = $routes['1'];
 $user = User::_info();
 $ui->assign('user', $user);
@@ -114,7 +114,7 @@ switch ($action) {
         $is_exist = ORM::for_table('sys_designs')->where('name', $name)->count();
         if($is_exist > 0)
         {
-            $msg .= 'Design Already exist <br>';
+            $msg .= 'Gift Box Already exist <br>';
         }
         
         if($msg == ''){
@@ -212,8 +212,8 @@ switch ($action) {
         }
         $cloths = ORM::for_table('sys_cloths')->select('id')->select('name')->order_by_asc('name')->find_array();
         $ui->assign('cloths', $cloths);
-        $ui->assign('xheader', Asset::css(['datatables.min', 'buttons.dataTables.min', 'modal']));
-        $ui->assign('xfooter', Asset::js(['datatables.min', 'dataTables.buttons.min', 'buttons.print.min', 'modal']));
+        $ui->assign('xheader', Asset::css(['jquery.datatables', 'modal']));
+        $ui->assign('xfooter', Asset::js(['datatables.min', 'modal']));
         $ui->assign('xfooter2', '<script type="text/javascript" src="' . $_theme . '/lib/design-list.js"></script>');
         $ui->display('manage/list-design.tpl');
         break;
@@ -228,12 +228,22 @@ switch ($action) {
         $request = $_REQUEST;
 
         $columns = [
+            0 => 'id',
+            1 => 'name',
+            2 => 'price',
+            3 => 'created_at'
+        ];
+        /*
+        $columns = [
             0 => 'd.id',
             1 => 'd.name',
-            2 => 'c.name',
-            3 => 'd.price',
-            4 => 'd.created_at'
+            2 => 'd.price',
+            3 => 'd.created_at'
+            // 2 => 'c.name',
+            // 3 => 'd.price',
+            // 4 => 'd.created_at'
         ];
+        */
 
         $length = isset($request['length']) ? (int)$request['length'] : 25;
         $start  = isset($request['start']) ? max(0, (int)$request['start']) : 0;
@@ -243,32 +253,33 @@ switch ($action) {
 
         $totalData = (int) ORM::for_table('sys_designs')->count();
 
-        $base_q = ORM::for_table('sys_designs')->table_alias('d')
-            ->select('d.*')
-            ->select('c.name', 'cloth_name')
-            ->left_outer_join('sys_cloths', ['d.cloth_id', '=', 'c.id'], 'c');
+        $base_q = ORM::for_table('sys_designs');
+        // $base_q = ORM::for_table('sys_designs')->table_alias('d')
+        //     ->select('d.*')
+        //     ->select('c.name', 'cloth_name')
+        //     ->left_outer_join('sys_cloths', ['d.cloth_id', '=', 'c.id'], 'c');
 
         // filters
-        if (!empty($request['cloth_id'])) {
-            $base_q->where('d.cloth_id', $request['cloth_id']);
-        }
+        // if (!empty($request['cloth_id'])) {
+        //     $base_q->where('d.cloth_id', $request['cloth_id']);
+        // }
 
         if (!empty($request['min_price'])) {
-            $base_q->where_gte('d.price', Finance::amount_fix($request['min_price']));
+            $base_q->where_gte('price', Finance::amount_fix($request['min_price']));
         }
 
         if (!empty($request['max_price'])) {
-            $base_q->where_lte('d.price', Finance::amount_fix($request['max_price']));
+            $base_q->where_lte('price', Finance::amount_fix($request['max_price']));
         }
 
         if (!empty($request['search']['value'])) {
             $s = '%' . $request['search']['value'] . '%';
-            $base_q->where_raw('(d.name LIKE ? OR d.description LIKE ? OR c.name LIKE ?)', [$s, $s, $s]);
+            $base_q->where_raw('(name LIKE ? OR description LIKE ? OR c.name LIKE ?)', [$s, $s, $s]);
         }
 
         if (!empty($request['design_name'])) {
             $n = '%' . $request['design_name'] . '%';
-            $base_q->where_like('d.name', $n);
+            $base_q->where_like('name', $n);
         }
 
         $count_q = clone $base_q;
@@ -301,7 +312,6 @@ switch ($action) {
             $data[] = [
                 $serial,
                 htmlspecialchars($r['name'], ENT_QUOTES, 'UTF-8'),
-                !empty($r['cloth_name']) ? htmlspecialchars($r['cloth_name'], ENT_QUOTES, 'UTF-8') : '-',
                 number_format((float)$r['price'], 2, '.', ''),
                 $img_link,
                 $qr_link,
@@ -536,7 +546,7 @@ switch ($action) {
 
         $design = ORM::for_table('sys_designs')->find_one($id);
         if(!$design){
-            echo json_encode(['success' => false, 'message' => 'Design not found']);
+            echo json_encode(['success' => false, 'message' => 'Gift Box not found']);
             break;
         }
 
@@ -551,9 +561,9 @@ switch ($action) {
 
         $design->delete();
 
-        _log('Design Deleted: '.$design->name.' [ID: '.$id.']','Admin',$user['id']);
+        _log('Gift Box Deleted: '.$design->name.' [ID: '.$id.']','Admin',$user['id']);
 
-        echo json_encode(['success' => true, 'message' => 'Design deleted successfully']);
+        echo json_encode(['success' => true, 'message' => 'Gift Box deleted successfully']);
         break;
 
     default:

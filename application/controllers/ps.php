@@ -185,7 +185,7 @@ switch ($action) {
             $msg .= 'Item Name is required <br>';
         }
         /*if($_POST['design_id'] == ''){
-            $msg .= 'Design is required for readymade product<br>';
+            $msg .= 'Gift Box is required for readymade product<br>';
         }*/        
         if($sales_price == ''){
             $msg .= 'Sale price is required <br>';

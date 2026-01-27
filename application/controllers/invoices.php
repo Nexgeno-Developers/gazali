@@ -4402,7 +4402,7 @@ $(".cdelete").click(function (e) {
         $id = $_POST['cloth_id'];
         $designs = ORM::for_table('sys_designs')->where('cloth_id', $id)->find_many();
 
-        $options = '<option value="">Select Design</option>';
+        $options = '<option value="">Select Gift Box</option>';
         foreach($designs as $row)
         {
             $image = json_decode($row['image'] , true);
