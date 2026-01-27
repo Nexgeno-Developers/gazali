@@ -148,6 +148,37 @@
         </div>
     </div>
 </div>
+<div class="row invoice-overview">
+    <div class="col-lg-12 financial-overview">
+        <h2 class="text-left">Invoice Overview</h2>
+    </div>
+    <div class="col-lg-6 col-md-6">
+        <div class="widget style1 lazur-bg info-tile info-tile-alt tile-blue">
+            <div class="dashboard-row">
+                <div class="text-left">
+                    <span>Total Invoice Created Amount</span>
+                    <h3 class="font-bold amount">{$invoice_created_amount}</h3>
+                </div>
+                <div class="text-right">
+                    <i class="las la-file-invoice-dollar admin-dashboard-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6">
+        <div class="widget style1 navy-bg info-tile info-tile-alt tile-success">
+            <div class="dashboard-row">
+                <div class="text-left">
+                    <span>Amount Received</span>
+                    <h3 class="font-bold amount">{$invoice_received_amount}</h3>
+                </div>
+                <div class="text-right">
+                    <i class="las la-hand-holding-usd admin-dashboard-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {$inv = json_decode(invoice_count($selected_branch), true)}
 <div class="row business-operations-row">
     <div class="col-lg-12 financial-overview">

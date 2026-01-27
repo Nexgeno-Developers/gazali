@@ -613,6 +613,23 @@ echo '
         $te = $te ?: '0.00';
         $ui->assign('te', $te);
 
+        // Invoice overview (branch-wise)
+        $invoice_created_q = ORM::for_table('sys_invoices');
+        $invoice_received_q = ORM::for_table('sys_invoices');
+
+        if (!empty($branch_id) && $branch_id !== 'all') {
+            $invoice_created_q->where('company_id', $branch_id);
+            $invoice_received_q->where('company_id', $branch_id);
+        }
+
+        $invoice_created_amount = $invoice_created_q->sum('total');
+        $invoice_created_amount = $invoice_created_amount ?: '0.00';
+        $ui->assign('invoice_created_amount', $invoice_created_amount);
+
+        $invoice_received_amount = $invoice_received_q->sum('credit');
+        $invoice_received_amount = $invoice_received_amount ?: '0.00';
+        $ui->assign('invoice_received_amount', $invoice_received_amount);
+
         $out = array();
         $d = ORM::for_table('sys_repeating');
         $d->where_gte('date', $fdate);

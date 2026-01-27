@@ -29,13 +29,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="description">Description</label>
-                                <textarea class="form-control" id="description" name="description" rows="2">{$branch->description|default:''}</textarea>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label for="address">Address</label>
                                 <textarea class="form-control" id="address" name="address" rows="2">{$branch->address|default:''}</textarea>
@@ -44,25 +38,22 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="contact_person">Contact Person</label>
-                                <input type="text" class="form-control" id="contact_person" name="contact_person" value="{$branch->contact_person|default:''}">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="contact_phone">Contact Phone</label>
                                 <input type="text" class="form-control" id="contact_phone" name="contact_phone" value="{$branch->contact_phone|default:''}">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="email">Email</label>
                                 <input type="email" class="form-control" id="email" name="email" value="{$branch->email|default:''}">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="company_logo">Company Logo</label>
                                 <input type="file" class="form-control" id="company_logo" name="company_logo" accept="image/x-png,image/gif,image/jpeg">
@@ -73,7 +64,7 @@
                                 {/if}
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="company_stamp">Company Stamp</label>
                                 <input type="file" class="form-control" id="company_stamp" name="company_stamp" accept="image/x-png,image/gif,image/jpeg">
@@ -87,19 +78,53 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="gstin">Tax Number</label>
                                 <input type="text" class="form-control" id="gstin" name="gstin" value="{$branch->gstin|default:''}">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="pan">PAN</label>
                                 <input type="text" class="form-control" id="pan" name="pan" value="{$branch->pan|default:''}">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="account_number">Account Number</label>
+                                <input type="text" class="form-control" id="account_number" name="account_number" value="{$branch->account_number|default:''}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ifsc">IFSC</label>
+                                <input type="text" class="form-control" id="ifsc" name="ifsc" value="{$branch->ifsc|default:''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    {* Hidden / optional fields kept together *}
+                    <div class="row">
+                        <div class="col-md-6 hide">
+                            <div class="form-group">
+                                <label for="description">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="2">{$branch->description|default:''}</textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6 hide">
+                            <div class="form-group">
+                                <label for="contact_person">Contact Person</label>
+                                <input type="text" class="form-control" id="contact_person" name="contact_person" value="{$branch->contact_person|default:''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 hide">
                             <div class="form-group">
                                 <label for="status">Status</label>
                                 <select class="form-control" id="status" name="status">
@@ -109,31 +134,16 @@
                                 </select>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4 hide">
                             <div class="form-group">
                                 <label for="bank_name">Bank Name</label>
                                 <input type="text" class="form-control" id="bank_name" name="bank_name" value="{$branch->bank_name|default:''}">
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="account_number">Account Number</label>
-                                <input type="text" class="form-control" id="account_number" name="account_number" value="{$branch->account_number|default:''}">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4 hide">
                             <div class="form-group">
                                 <label for="account_type">Account Type</label>
                                 <input type="text" class="form-control" id="account_type" name="account_type" value="{$branch->account_type|default:''}">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="ifsc">IFSC</label>
-                                <input type="text" class="form-control" id="ifsc" name="ifsc" value="{$branch->ifsc|default:''}">
                             </div>
                         </div>
                     </div>
