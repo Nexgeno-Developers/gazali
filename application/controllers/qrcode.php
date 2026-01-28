@@ -223,37 +223,30 @@ switch ($action){
 
                          $sales_price = array();
                          
-                         $fabricNames = [];
-                         foreach($fabrics as $row)
-                         {
-                            $pr = ORM::for_table('sys_items')->find_one($row['fabric_id']);
-                            $sales_price[] = $pr['sales_price'] * $row['fabric_qty'];
-                            $fabricNames[] = $pr['name'];
-                         }
-                         
-                         $stoneNames = [];
-                         foreach($stones as $row)
-                         {
-                            $pr = ORM::for_table('sys_items')->find_one($row['stone_id']);
-                            $sales_price[]= $pr['sales_price'] * $row['stone_qty'];
-                            $stoneNames[] = $pr['name'];
-                         }
-                         
-                         $handworkNames = [];
-                         foreach($handworks as $row)
-                         {
-                            $pr = ORM::for_table('sys_items')->find_one($row['handwork_id']);
-                            $sales_price[]= $pr['sales_price'] * $row['handwork_qty'];
-                            $handworkNames[] = $pr['name'];
-                         }
-                         foreach($others as $row)
-                         {
-                            $pr = ORM::for_table('sys_items')->find_one($row['other_id']);
-                            $sales_price[]= $pr['sales_price'] * $row['other_qty'];
-                         }   
-                         
-                         $sales_price[]= $design['price'];
+                                                  $categories = ORM::for_table(''sys_items_category'')->find_array();
+                         $sales_price = [];
+                         $lines = [];
 
+                         foreach($categories as $cat){
+                            $column = $cat[''value''];
+                            if(!isset($design[$column]) || empty($design[$column])){ continue; }
+                            $components = json_decode($design[$column], true);
+                            if(!is_array($components)){ continue; }
+                            $names = [];
+                            foreach($components as $row){
+                                $itemId = $row[''item_id''] ?? ($row[$column.''_id''] ?? null);
+                                $qty    = $row[''qty''] ?? ($row[$column.''_qty''] ?? 0);
+                                if(!$itemId){ continue; }
+                                $pr = ORM::for_table(''sys_items'')->find_one($itemId);
+                                if(!$pr){ continue; }
+                                $names[] = $pr[''name''];
+                                $sales_price[] = $pr[''sales_price''] * $qty;
+                            }
+                            if(!empty($names)){
+                                $lines[] = '<div><b>'.$cat[''name''].' - </b><br>'.implode(',', $names).'</div>';
+                            }
+                         }
+                         $sales_price[] = $design[''price''];
                          $sales_price = array_sum($sales_price);
                          
                             echo 
@@ -277,4 +270,5 @@ switch ($action){
         }
     break;
 }
+
 

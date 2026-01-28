@@ -14,11 +14,6 @@
 		<div class="form-group">
 			<label class="col-lg-2 control-label" for="product_category">Product Category</label>
 			<div class="col-lg-10">
-				<!--<select name="product_category" class="form-control">
-					<option value="fabric" {if $d[ 'product_category'] eq 'fabric'} selected {/if}>Fabric</option>
-					<option value="stone_&_size" {if $d[ 'product_category'] eq 'stone_&_size'} selected {/if}>Stone & Size</option>
-				</select>-->
-
 				{assign itemCategory  get_item_categories()}
 				{foreach $itemCategory as $cat}
 				<div class="radio-button">
@@ -26,13 +21,6 @@
 					<label for="{$cat['value']}">{$cat['name']}</label> 
 				</div>				
 				{/foreach}
-
-<!--<div class="radio-button">
-				<input type="radio" name="product_category" value="fabric" id="fabric" {if $d[ 'product_category'] eq 'fabric'} checked {/if}/> 
-				<label for="fabric">Fabric</label> </div>
-<div class="radio-button">
-				<input type="radio" name="product_category" value="stone_&_size" id="stone_&_size" {if $d[ 'product_category'] eq 'stone_&_size'} checked {/if} /> <label for="stone_&_size">Stone Color & Size</label></div>-->
-
 			</div>
 		</div>
 		{else}

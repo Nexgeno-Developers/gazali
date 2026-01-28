@@ -9,40 +9,16 @@
             "paging": false
         });
 
-        get_list('fabric');
+        // show first category by default
+        var firstCat = $('.category-radio').first().val() || '';
+        get_list(firstCat);
     });
 
 
     function get_list(val)
     {
-        if(val == 'fabric')
-        {
-            $('.m_fabric').show();
-            $('.m_stone__size').hide();
-            $('.m_handwork_materials').hide();
-            $('.m_others').hide();
-        }
-        else if(val == 'stone__size')
-        {
-            $('.m_fabric').hide();
-            $('.m_stone__size').show();
-            $('.m_handwork_materials').hide();
-            $('.m_others').hide();
-        }
-        else if(val == 'handwork_materials')
-        {
-            $('.m_fabric').hide();
-            $('.m_stone__size').hide();
-            $('.m_handwork_materials').show();
-            $('.m_others').hide();
-        }
-        else if(val == 'others')
-        {
-            $('.m_fabric').hide();
-            $('.m_stone__size').hide();
-            $('.m_handwork_materials').hide();
-            $('.m_others').show();
-        }                
+        $('.m_row').hide();
+        $('.m_'+val).show();
     }    
 </script>
 <div class="modal-header">
@@ -104,7 +80,7 @@
     {foreach $itemCategory as $cat}
     {assign cat_val  str_replace('&', '', $cat['value'])}
     <div class="radio-button margintop_20">
-        <input id="{$cat_val}" type="radio" name="product_category" value="{$cat_val}" onchange="get_list(this.value);" {if $cat_val eq 'fabric'}checked{/if}> 
+        <input class="category-radio" id="{$cat_val}" type="radio" name="product_category" value="{$cat_val}" onchange="get_list(this.value);" {if $smarty.foreach.catloop.first}checked{/if}> 
         <label for="{$cat_val}">{$cat['name']}</label> 
     </div>    
     {/foreach}
@@ -129,7 +105,7 @@
                         </thead>
                         <tbody>
                             {foreach $p_customize as $ds} 
-                            <tr class="m_{str_replace('&', '', $ds['product_category'])}">
+                            <tr class="m_row m_{str_replace('&', '', $ds['product_category'])}">
                                 <td>
                                     <input type="checkbox" class="si" value="{$ds['item_number']}">
                                     <input type="hidden" class="pid" value="{$ds['id']}">

@@ -166,7 +166,7 @@ switch ($action) {
             break;
         }
         $name = _post('name');
-        $sales_price = Finance::amount_fix(_post('sales_price'));
+        // $sales_price = Finance::amount_fix(_post('sales_price'));
         $item_number = _post('item_number');
         $description = _post('description');
         $product_type = _post('product_type');
@@ -187,9 +187,9 @@ switch ($action) {
         /*if($_POST['design_id'] == ''){
             $msg .= 'Gift Box is required for readymade product<br>';
         }*/        
-        if($sales_price == ''){
-            $msg .= 'Sale price is required <br>';
-        }
+        // if($sales_price == ''){
+        //     $msg .= 'Sale price is required <br>';
+        // }
         if($purchase_price == ''){
             $msg .= 'Purchase price is required <br>';
         }
@@ -212,7 +212,7 @@ switch ($action) {
         if($msg == ''){
             $d = ORM::for_table('sys_items')->create();
             $d->name = $name;
-            $d->sales_price = $sales_price;
+            // $d->sales_price = $sales_price;
             $d->item_number = $item_number;
             $d->description = $description;
             $d->added = date('Y-m-d');
@@ -251,46 +251,49 @@ switch ($action) {
             $design_id = $_POST['design_id'];
             if(!empty($design_id)){
                 $design    = ORM::for_table('sys_designs')->find_one($design_id);
-
-                $fabrics   = json_decode($design['fabrics'], true);
-                $stones    = json_decode($design['stones'], true);
-                $handworks = json_decode($design['handworks'], true);
-                $others    = json_decode($design['others'], true);
-
-                $sub_product_ids = array();
-                $sub_product_qty = array();
-
-                foreach($fabrics as $row)
-                {
-                    $sub_product_ids[] = $row['fabric_id'];
-                    $sub_product_qty[] = $row['fabric_qty']*$product_stock;          
+                if ($design) {
+                    // Fetch all categories dynamically
+                    $categories = ORM::for_table('sys_items_category')->find_many();
+                    foreach ($categories as $category) {       
+                        $column = $category->value; // must match column name in sys_designs
+                        // If column does not exist or empty, skip
+                        if (!isset($design->$column) || empty($design->$column)) {
+                            continue;
+                        }
+                        $items = json_decode($design->$column, true);
+                        if (!is_array($items)) {
+                            continue;
+                        }
+                        foreach ($items as $item) {
+                            // normalize possible keys (dynamic only)
+                            $idKeys = ['item_id', $column . '_id'];
+                            $qtyKeys = ['qty', $column . '_qty'];
+                            $compId = null;
+                            $compQty = null;
+                            foreach ($idKeys as $k) {
+                                if (!empty($item[$k])) { $compId = $item[$k]; break; }
+                            }
+                            foreach ($qtyKeys as $k) {
+                                if (isset($item[$k]) && $item[$k] !== '') { $compQty = $item[$k]; break; }
+                            }
+                            if (empty($compId) || empty($compQty)) {
+                                continue;
+                            }
+                            stock_record(
+                                $compId,
+                                $compQty * $product_stock,
+                                'debit',
+                                '',
+                                $id,
+                                '',
+                                '',
+                                $branch_id,
+                                ''
+                            );
+                        }
+                    }
                 }
-                foreach($stones as $row)
-                {
-                    $sub_product_ids[] = $row['stone_id'];
-                    $sub_product_qty[] = $row['stone_qty']*$product_stock;          
-                }  
-                foreach($handworks as $row)
-                {
-                    $sub_product_ids[] = $row['handwork_id'];
-                    $sub_product_qty[] = $row['handwork_qty']*$product_stock;          
-                }  
-                foreach($others as $row)
-                {
-                    $sub_product_ids[] = $row['other_id'];
-                    $sub_product_qty[] = $row['other_qty']*$product_stock;          
-                }
-                
-                $p = 0;
-                foreach($sub_product_ids as $product_id)
-                {
-                    stock_record($product_id, $sub_product_qty[$p], 'debit', '', $id, "", "", $branch_id, "");
-                    $p++;
-                }
-                //deduct substock end  
-                //$d->design_id = $design_id;
             }
-
             _msglog('s',$_L['Item Added Successfully']);
             echo $id;
         }
@@ -784,61 +787,70 @@ switch ($action) {
 
 
                 $main_product_id = $id;
-                $design_id       = $design_id;
 
-                if(!empty($design_id)){
-                    $design    = ORM::for_table('sys_designs')->find_one($design_id);
-        
-                    $fabrics   = json_decode($design['fabrics'], true);
-                    $stones    = json_decode($design['stones'], true);
-                    $handworks = json_decode($design['handworks'], true);
-                    $others    = json_decode($design['others'], true);
-        
-                    $sub_product_ids = array();
-                    $sub_product_qty = array();
-        
-                    foreach($fabrics as $row)
-                    {
-                        $sub_product_ids[] = $row['fabric_id'];
-                        $sub_product_qty[] = $row['fabric_qty']*$product_stock;          
-                    }
-                    foreach($stones as $row)
-                    {
-                        $sub_product_ids[] = $row['stone_id'];
-                        $sub_product_qty[] = $row['stone_qty']*$product_stock;          
-                    }  
-                    foreach($handworks as $row)
-                    {
-                        $sub_product_ids[] = $row['handwork_id'];
-                        $sub_product_qty[] = $row['handwork_qty']*$product_stock;          
-                    }  
-                    foreach($others as $row)
-                    {
-                        $sub_product_ids[] = $row['other_id'];
-                        $sub_product_qty[] = $row['other_qty']*$product_stock;          
-                    }
-                    
-                    $p = 0;
-                    foreach($sub_product_ids as $product_id)
-                    {
-                        /*$stock  = ORM::for_table('sys_items_stock')->where('item_id', $product_id)->where('parent_item_id', $main_product_id)->find_one();
-                        $stock->stock = $stock->stock + ($sub_product_qty[$p]*$product_stock);
-                        $stock->save();*/
+                if (!empty($design_id)) {
 
-                        if($product_stock < 0)
-                        {
-                            stock_record($product_id, abs($sub_product_qty[$p]), 'credit', '', $main_product_id, "", "", $branch_id, "");
+                    $design = ORM::for_table('sys_designs')->find_one($design_id);
+
+                    if ($design) {
+
+                        // Fetch category list (attar, perfumes, etc.)
+                        $categories = ORM::for_table('sys_items_category')->find_many();
+
+                        foreach ($categories as $category) {
+
+                            $column = $category->value; // must match column name in sys_designs
+
+                            // Skip missing / empty columns
+                            if (!isset($design->$column) || empty($design->$column)) {
+                                continue;
+                            }
+
+                            $items = json_decode($design->$column, true);
+
+                            if (!is_array($items)) {
+                                continue;
+                            }
+
+                            foreach ($items as $item) {
+
+                                if (empty($item['item_id']) || empty($item['qty'])) {
+                                    continue;
+                                }
+
+                                $qty = abs($item['qty'] * $product_stock);
+
+                                if ($product_stock < 0) {
+                                    // If main product stock reduced → return sub items
+                                    stock_record(
+                                        $item['item_id'],
+                                        $qty,
+                                        'credit',
+                                        '',
+                                        $main_product_id,
+                                        '',
+                                        '',
+                                        $branch_id,
+                                        ''
+                                    );
+                                } else {
+                                    // If main product stock increased → consume sub items
+                                    stock_record(
+                                        $item['item_id'],
+                                        $qty,
+                                        'debit',
+                                        '',
+                                        $main_product_id,
+                                        '',
+                                        '',
+                                        $branch_id,
+                                        ''
+                                    );
+                                }
+                            }
                         }
-                        else
-                        {
-                            stock_record($product_id, abs($sub_product_qty[$p]), 'debit', '', $main_product_id, "", "", $branch_id, "");
-                        }
-
-
-                        $p++;
                     }
                 }
-
 
                 echo $d->id();
             }
@@ -1025,60 +1037,43 @@ switch ($action) {
 
             $design_id = $_POST['design_id'];
             $design    = ORM::for_table('sys_designs')->find_one($design_id);
-
-            $fabrics   = json_decode($design['fabrics'], true);
-            $stones    = json_decode($design['stones'], true);
-            $handworks = json_decode($design['handworks'], true);
-            $others    = json_decode($design['others'], true);
-
-            $sub_product_ids = array();
-            $sub_product_qty = array();
-
-            foreach($fabrics as $row)
-            {
-                $sub_product_ids[] = $row['fabric_id'];
-                $sub_product_qty[] = $row['fabric_qty'];          
+            if (!$design) {
+                echo json_encode(['sale_p' => 0, 'purchase_p' => 0]);
+                break;
             }
-            foreach($stones as $row)
-            {
-                $sub_product_ids[] = $row['stone_id'];
-                $sub_product_qty[] = $row['stone_qty'];          
-            }  
-            foreach($handworks as $row)
-            {
-                $sub_product_ids[] = $row['handwork_id'];
-                $sub_product_qty[] = $row['handwork_qty'];          
-            }  
-            foreach($others as $row)
-            {
-                $sub_product_ids[] = $row['other_id'];
-                $sub_product_qty[] = $row['other_qty'];          
-            }
-            
-            $p = 0;
             $purchase_price = 0;
             $sale_price     = 0;
-            foreach($sub_product_ids as $product_id)
-            {
-                $product = ORM::for_table('sys_items')->find_one($product_id);
-                $purchase_price += $product['purchase_price']*$sub_product_qty[$p]; 
-                $sale_price += $product['sales_price']*$sub_product_qty[$p]; 
-
-                /*echo '<pre>';
-                var_dump($product['purchase_price']);
-                var_dump($sub_product_qty[$p]);
-                echo '<br><br>';
-                var_dump($product['sales_price']);
-                var_dump($sub_product_qty[$p]);
-                echo '</pre>';*/
-
-                $p++;
+            // Fetch categories dynamically
+            $categories = ORM::for_table('sys_items_category')->find_many();
+            foreach ($categories as $category) {
+                $column = $category->name; // must match column name in sys_designs
+                if (!isset($design->$column) || empty($design->$column)) {
+                    continue;
+                }
+                $items = json_decode($design->$column, true);
+                if (!is_array($items)) {
+                    continue;
+                }
+                foreach ($items as $item) {
+                    if (empty($item['item_id']) || empty($item['qty'])) {
+                        continue;
+                    }
+                    $product = ORM::for_table('sys_items')->find_one($item['item_id']);
+                    if (!$product) {
+                        continue;
+                    }
+                    $purchase_price += ($product->purchase_price * $item['qty']);
+                    $sale_price     += ($product->sales_price * $item['qty']);
+                }
             }
+            // Add design base price
+            $sale_price += $design->price;
+            echo json_encode([
+                'sale_p'     => $sale_price,
+                'purchase_p' => $purchase_price,
+                'img'        => json_decode($design->image, true)[0] ?? ''
+            ]);
 
-            $sale_price += $design['price'];
-
-            echo json_encode(array('sale_p' => $sale_price, 'purchase_p' => $purchase_price, 'img' => json_decode($design['image'], true)[0]));
-    
         break;
 
     case 'transfer_post':

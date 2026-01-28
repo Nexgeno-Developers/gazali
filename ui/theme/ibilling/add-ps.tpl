@@ -143,8 +143,7 @@ function get_category(val)
 {
 	if(val == 'customize')
 	{
-		/*$('.product_category').html('<label class="col-lg-2 control-label" for="product_category">Product Category</label> <div class="col-lg-10"><!--<select name="product_category" class="form-control"> <option value="fabric">Fabric</option> <option value="stone_&_size">Stone Color & Size</option> </select>--><div class="radio-button"><input type="radio" name="product_category" value="fabric" id="fabric" checked/> <label for="fabric">Fabric</label></div> <div class="radio-button"><input type="radio" name="product_category" value="stone_&_size" id="stone_&_size"/> <label for="stone_&_size">Stone Color & Size</label></div> </div>');*/
-        $('.product_category').html('<label class="col-lg-2 control-label" for="product_category">Product Category</label><div class="col-lg-10">{assign itemCategory get_item_categories()} {foreach $itemCategory as $cat}<div class="radio-button"><input type="radio" name="product_category" value="{$cat["value"]}" id="{$cat["value"]}"><label for="{$cat["value"]}">{$cat["name"]}</label></div>{/foreach}  </div>');  
+		$('.product_category').html('<label class="col-lg-2 control-label" for="product_category">Product Category</label><div class="col-lg-10">{assign itemCategory get_item_categories()} {foreach $itemCategory as $cat}<div class="radio-button"><input type="radio" name="product_category" value="{$cat["value"]}" id="{$cat["value"]}"><label for="{$cat["value"]}">{$cat["name"]}</label></div>{/foreach}  </div>');  
         
         $('#purchase_price').val('');
         $('#sales_price').val('');

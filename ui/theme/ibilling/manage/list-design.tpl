@@ -5,18 +5,16 @@
         <div class="ibox float-e-margins">
             <div class="ibox-title">
                 <h5>List Gift Box</h5>
-                {if $user->roleid eq 0}
                     <div class="ibox-tools">
                         <a href="{$_url}manage/add-design" class="btn btn-primary btn-xs">
                             <i class="fa fa-plus"></i> Add Gift Box</a>
                     </div>
-                {/if}
             </div>
             <div class="ibox-content">
-
+{*
                 <form id="designFilters" style="margin-bottom:15px;">
                     <div class="row">
-                        {*
+                       
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="design_name">Gift Box Name</label>
@@ -34,7 +32,7 @@
                                     {/foreach}
                                 </select>
                             </div>
-                        </div>*}
+                        </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="min_price">Min Price</label>
@@ -56,15 +54,15 @@
                         </div>
                     </div>
                 </form>
-
+*}
                 <div class="table-responsive">
                     <table id="design-datatable" class="table table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Name</th>
-                                {* <th>Cloth</th> *}
-                                <th>Silai Price</th>
+                                {* <th>Cloth</th>
+                                <th>Silai Price</th> *}
                                 <th>Image</th>
                                 <th>QRCode</th>
                                 <th class="text-right">{$_L['Manage']}</th>
@@ -104,6 +102,14 @@ $(function(){
         return o;
     };
 
+    $('#ajax-modal').on('shown.bs.modal', function () {
+        if ($.fn.select2) {
+            $(this).find('.select2').select2({
+                dropdownParent: $('#ajax-modal')
+            });
+        }
+    });
+
     var table = $('#design-datatable').DataTable({
         processing: true,
         serverSide: true,
@@ -124,8 +130,8 @@ $(function(){
         ],
         order: [[0, 'desc']],
         columnDefs: [
-            { orderable: false, targets: [5] },
-            { className: 'text-right', targets: [3,5] }
+            { orderable: false, targets: [4] },
+            { className: 'text-right', targets: [3,4] }
         ],
         drawCallback: function(){
             attachRowHandlers();

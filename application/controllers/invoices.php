@@ -4553,167 +4553,81 @@ $(".cdelete").click(function (e) {
 
         $items = '';
 
-        $fabrics = json_decode($design['fabrics'], true);
-        
-        foreach($fabrics as $row)
-        {
-            $product = ORM::for_table('sys_items')->find_one($row['fabric_id']);
+        $categories = ORM::for_table('sys_items_category')->find_array();
 
-            $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
+        foreach($categories as $cat){
+            $column = $cat['value'];
+            if(!isset($design[$column]) || empty($design[$column])){
+                continue;
+            }
+            $components = json_decode($design[$column], true);
+            if(!is_array($components)){
+                continue;
+            }
 
-            $items .= 
-            '
-            <tr>
-                <td class="number">
-                    '.$product_img.'
-                    <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
-                    <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
-                    <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
-                </td>
-                <td>
-                    <input type="text" class="form-control qty" value="'.$row['fabric_qty'].'" name="qty[]">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
-                </td>
-                <td class="ltotal">
-                    <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$row['fabric_qty'].'" readonly="" required="">
-                </td>
-                <td>
-                <input type="hidden" name="item_type[]" value="product">
-                </td>                 
-                <td class="delete">
-                    <i class="fa fa-trash tr-remove"></i>
-                </td>
-            </tr>            
-            ';
-            $last_row++;
+            foreach($components as $row){
+                $idKeys  = ['item_id', $column . '_id'];
+                $qtyKeys = ['qty', $column . '_qty'];
+
+                $compId = null;
+                $compQty = null;
+
+                foreach($idKeys as $k){
+                    if(!empty($row[$k])){
+                        $compId = $row[$k];
+                        break;
+                    }
+                }
+                foreach($qtyKeys as $k){
+                    if(isset($row[$k]) && $row[$k] !== ''){
+                        $compQty = $row[$k];
+                        break;
+                    }
+                }
+
+                if(empty($compId) || empty($compQty)){
+                    continue;
+                }
+
+                $product = ORM::for_table('sys_items')->find_one($compId);
+                if(!$product){
+                    continue;
+                }
+
+                $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
+
+                $items .= 
+                '
+                <tr>
+                    <td class="number">
+                        '.$product_img.'
+                        <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
+                        <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
+                        <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control qty" value="'.$compQty.'" name="qty[]">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
+                    </td>
+                    <td class="ltotal">
+                        <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$compQty.'" readonly="" required="">
+                    </td>
+                    <td>
+                        <input type="hidden" name="item_type[]" value="product">
+                    </td>                 
+                    <td class="delete">
+                        <i class="fa fa-trash tr-remove"></i>
+                    </td>
+                </tr>            
+                ';
+                $last_row++;
+            }
         }
-
-        $stones = json_decode($design['stones'], true);
-        
-        foreach($stones as $row)
-        {
-            $product = ORM::for_table('sys_items')->find_one($row['stone_id']);
-
-            $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
-
-            $items .= 
-            '
-            <tr>
-                <td class="number">
-                    '.$product_img.'
-                    <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
-                    <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
-                    <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
-                </td>
-                <td>
-                    <input type="text" class="form-control qty" value="'.$row['stone_qty'].'" name="qty[]">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
-                </td>
-                <td class="ltotal">
-                    <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$row['stone_qty'].'" readonly="" required="">
-                </td>
-                <td>
-                    <input type="hidden" name="item_type[]" value="product">
-                </td>                 
-                <td class="delete">
-                    <i class="fa fa-trash tr-remove"></i>
-                </td>
-            </tr>            
-            ';
-            $last_row++;
-        }  
-        
-        
-
-        $handwork = json_decode($design['handworks'], true);
-        
-        foreach($handwork as $row)
-        {
-            $product = ORM::for_table('sys_items')->find_one($row['handwork_id']);
-
-            $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
-
-            $items .= 
-            '
-            <tr>
-                <td class="number">
-                    '.$product_img.'
-                    <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
-                    <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
-                    <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
-                </td>
-                <td>
-                    <input type="text" class="form-control qty" value="'.$row['handwork_qty'].'" name="qty[]">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
-                </td>
-                <td class="ltotal">
-                    <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$row['handwork_qty'].'" readonly="" required="">
-                </td>
-                <td>
-                    <input type="hidden" name="item_type[]" value="product">
-                </td>                 
-                <td class="delete">
-                    <i class="fa fa-trash tr-remove"></i>
-                </td>
-            </tr>            
-            ';
-            $last_row++;
-        }
-
-        $others = json_decode($design['others'], true);
-        
-        foreach($others as $row)
-        {
-            $product = ORM::for_table('sys_items')->find_one($row['other_id']);
-
-            $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
-
-            $items .= 
-            '
-            <tr>
-                <td class="number">
-                    '.$product_img.'
-                    <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
-                    <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
-                    <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
-                </td>
-                <td>
-                    <input type="text" class="form-control qty" value="'.$row['other_qty'].'" name="qty[]">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
-                </td>
-                <td class="ltotal">
-                    <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$row['other_qty'].'" readonly="" required="">
-                </td>
-                <td>
-                    <input type="hidden" name="item_type[]" value="product">
-                </td>                 
-                <td class="delete">
-                    <i class="fa fa-trash tr-remove"></i>
-                </td>
-            </tr>            
-            ';
-            $last_row++;
-        }        
 
 
 
@@ -4770,153 +4684,78 @@ $(".cdelete").click(function (e) {
 
         $items = '';
 
-        $fabrics = json_decode($design['fabrics'], true);
-        
-        foreach($fabrics as $row)
-        {
-            $product = ORM::for_table('sys_items')->find_one($row['fabric_id']);
+        $categories = ORM::for_table('sys_items_category')->find_array();
 
-            $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
+        foreach($categories as $cat){
+            $column = $cat['value'];
+            if(!isset($design[$column]) || empty($design[$column])){
+                continue;
+            }
+            $components = json_decode($design[$column], true);
+            if(!is_array($components)){
+                continue;
+            }
 
-            $items .= 
-            '
-            <tr>
-                <td class="number">
-                    '.$product_img.'
-                    <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
-                    <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
-                    <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
-                </td>
-                <td>
-                    <input type="text" class="form-control qty" value="'.$row['fabric_qty'].'" name="qty[]">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
-                </td>
-                <td class="ltotal">
-                    <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$row['fabric_qty'].'" readonly="" required="">
-                </td>
-                <td class="hide">
-                <input type="hidden" name="item_type[]" value="product">
-                </td>                 
-            </tr>            
-            ';
-            $last_row++;
-        }
+            foreach($components as $row){
+                $idKeys  = ['item_id', $column . '_id'];
+                $qtyKeys = ['qty', $column . '_qty'];
 
-        $stones = json_decode($design['stones'], true);
-        
-        foreach($stones as $row)
-        {
-            $product = ORM::for_table('sys_items')->find_one($row['stone_id']);
+                $compId = null;
+                $compQty = null;
 
-            $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
+                foreach($idKeys as $k){
+                    if(!empty($row[$k])){
+                        $compId = $row[$k];
+                        break;
+                    }
+                }
+                foreach($qtyKeys as $k){
+                    if(isset($row[$k]) && $row[$k] !== ''){
+                        $compQty = $row[$k];
+                        break;
+                    }
+                }
 
-            $items .= 
-            '
-            <tr>
-                <td class="number">
-                    '.$product_img.'
-                    <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
-                    <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
-                    <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
-                </td>
-                <td>
-                    <input type="text" class="form-control qty" value="'.$row['stone_qty'].'" name="qty[]">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
-                </td>
-                <td class="ltotal">
-                    <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$row['stone_qty'].'" readonly="" required="">
-                </td>
-                <td class="hide">
+                if(empty($compId) || empty($compQty)){
+                    continue;
+                }
+
+                $product = ORM::for_table('sys_items')->find_one($compId);
+                if(!$product){
+                    continue;
+                }
+
+                $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
+
+                $items .= 
+                '
+                <tr>
+                    <td class="number">
+                        '.$product_img.'
+                        <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
+                        <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
+                        <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control qty" value="'.$compQty.'" name="qty[]">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
+                    </td>
+                    <td class="ltotal">
+                        <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$compQty.'" readonly="" required="">
+                    </td>
+                    <td class="hide">
                     <input type="hidden" name="item_type[]" value="product">
-                </td>                 
-            </tr>            
-            ';
-            $last_row++;
+                    </td>                 
+                </tr>            
+                ';
+                $last_row++;
+            }
         }
-        
-        $handwork = json_decode($design['handworks'], true);
-        
-        foreach($handwork as $row)
-        {
-            $product = ORM::for_table('sys_items')->find_one($row['handwork_id']);
-
-            $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
-
-            $items .= 
-            '
-            <tr>
-                <td class="number">
-                    '.$product_img.'
-                    <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
-                    <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
-                    <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
-                </td>
-                <td>
-                    <input type="text" class="form-control qty" value="'.$row['handwork_qty'].'" name="qty[]">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
-                </td>
-                <td class="ltotal">
-                    <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$row['handwork_qty'].'" readonly="" required="">
-                </td>
-                <td class="hide">
-                    <input type="hidden" name="item_type[]" value="product">
-                </td>                 
-            </tr>            
-            ';
-            $last_row++;
-        }
-        
-        $others = json_decode($design['others'], true);
-        
-        foreach($others as $row)
-        {
-            $product = ORM::for_table('sys_items')->find_one($row['other_id']);
-
-            $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
-
-            $items .= 
-            '
-            <tr>
-                <td class="number">
-                    '.$product_img.'
-                    <input type="hidden" class="form-control sid" name="s_id[]" value="'.$product['item_number'].'" id="s_id">
-                    <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$product['id'].'" id="p_id">
-                    <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
-                </td>
-                <td>
-                    <input type="text" class="form-control qty" value="'.$row['other_qty'].'" name="qty[]">
-                </td>
-                <td>
-                    <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
-                </td>
-                <td class="ltotal">
-                    <input type="number" class="form-control lvtotal" name="total[]" value="'.$product['sales_price']*$row['other_qty'].'" readonly="" required="">
-                </td>
-                <td class="hide">
-                    <input type="hidden" name="item_type[]" value="product">
-                </td>                 
-            </tr>            
-            ';
-            $last_row++;
-        }        
 
 
         $design_img = json_decode($design['image'], true)[0]; 

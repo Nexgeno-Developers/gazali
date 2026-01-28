@@ -26,21 +26,22 @@ switch ($action) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
 
-        $fabrics = ORM::for_table('sys_items')->where('product_category', 'fabric')->find_many();
-        $ui->assign('fabrics', $fabrics); 
-        $stones = ORM::for_table('sys_items')->where('product_category', 'stone_&_size')->find_many();
-        $ui->assign('stones', $stones); 
-         
-        $handwork_materials = ORM::for_table('sys_items')->where('product_category', 'handwork_materials')->find_many();
-        $ui->assign('handwork_materials', $handwork_materials); 
-        $others = ORM::for_table('sys_items')->where('product_category', 'others')->find_many();
-        $ui->assign('others', $others);
+        // Dynamic categories and their items
+        $categories = ORM::for_table('sys_items_category')->find_array();
+        $category_items = [];
+        foreach ($categories as $cat) {
+            $category_items[$cat['value']] = ORM::for_table('sys_items')
+                ->where('product_category', $cat['value'])
+                ->find_array();
+        }
 
+        $ui->assign('categories', $categories);
+        $ui->assign('category_items', $category_items);
         $cloths = ORM::for_table('sys_cloths')->find_many();
         $ui->assign('cloths', $cloths);        
         
         $ui->assign('type','Product');
-
+        
         // Fetch category employees
         $categoryEmployees = ORM::for_table('category_employee')->select('id')->select('name')->find_array();
         $ui->assign('category_employees', $categoryEmployees);
@@ -49,10 +50,10 @@ switch ($action) {
         $js_arr = array('s2/js/select2.min','numeric');
         $ui->assign('xjq', '$(\'.amount\').autoNumeric(\'init\');');        
         Event::trigger('add_invoice_rendering_form');
-
+        
         $ui->assign('xheader', Asset::css($css_arr));
         $ui->assign('xfooter', Asset::js($js_arr));
-
+        
         $max = ORM::for_table('sys_items')->max('id');
         $nxt = $max+1;
         $ui->assign('nxt',$nxt);
@@ -61,22 +62,19 @@ switch ($action) {
 
 
     case 'add-post':
-        if($user->roleid != 0){
-            r2(U."dashboard",'e',$_L['You do not have permission']);
-        }
+        // if($user->roleid != 0){
+            // r2(U."dashboard",'e',$_L['You do not have permission']);
+        // }
         $name = trim(_post('name'));
         $sales_price = Finance::amount_fix(_post('sales_price'));
+        if($sales_price === ''){
+            $sales_price = 0; // optional for designs
+        }
         $description = _post('description');
         $cloth_id    = _post('cloth_id');
-        $fabric_ids  = $_POST['fabric_id'];
-        $fabric_qty  = $_POST['fabric_qty'];
-        $stone_ids   = $_POST['stone_id'];
-        $stone_qty  = $_POST['stone_qty'];
-
-        $handwork_ids   = $_POST['handwork_id'];
-        $handwork_qty  = $_POST['handwork_qty'];
-        $others_ids   = $_POST['others_id'];
-        $others_qty  = $_POST['others_qty'];
+        $component_ids  = $_POST['component_id'] ?? [];
+        $component_qtys = $_POST['component_qty'] ?? [];
+        $categories = ORM::for_table('sys_items_category')->find_array();
 
         $category_ids    = $_POST['category_id'];
         $category_prices = $_POST['category_price'];
@@ -96,9 +94,7 @@ switch ($action) {
         if($name == ''){
             $msg .= 'Item Name is required <br>';
         }
-        if($sales_price == ''){
-            $msg .= 'Sale price is required <br>';
-        }  
+        // sale price optional for gift box; no validation
         if($category_prices){
             foreach($category_prices as $price) {
                 if($price == '') {
@@ -123,47 +119,21 @@ switch ($action) {
             $d->price = $sales_price;
             $d->description = $description;
             $d->timestamp = date('Y-m-d H:i:s');
-
             
-            $fabric = array();   
-            for ($x = 0; $x <= count($fabric_ids); $x++)
-            {
-                if(!empty($fabric_ids[$x]) && !empty($fabric_qty[$x]))
-                {
-                    $fabric[] = array('fabric_id' => $fabric_ids[$x], 'fabric_qty' => $fabric_qty[$x]);
+            // dynamic components per category
+            foreach ($categories as $cat) {
+                $val = $cat['value'];
+                $ids = $component_ids[$val] ?? [];
+                $qty = $component_qtys[$val] ?? [];
+                $components = [];
+                $count = max(count($ids), count($qty));
+                for ($i = 0; $i < $count; $i++) {
+                    if (!empty($ids[$i]) && isset($qty[$i]) && $qty[$i] !== '') {
+                        $components[] = ['item_id' => $ids[$i], 'qty' => $qty[$i]];
+                    }
                 }
+                $d->$val = json_encode($components);
             }
-            $d->fabrics = json_encode($fabric);
-
-            $stone = array();   
-            for ($x = 0; $x <= count($stone_ids); $x++)
-            {
-                if(!empty($stone_ids[$x]) && !empty($stone_qty[$x]))
-                {
-                    $stone[] = array('stone_id' => $stone_ids[$x], 'stone_qty' => $stone_qty[$x]);
-                }
-            }
-            $d->stones = json_encode($stone); 
-            
-            $handworks = array();   
-            for ($x = 0; $x <= count($handwork_ids); $x++)
-            {
-                if(!empty($handwork_ids[$x]) && !empty($handwork_qty[$x]))
-                {
-                    $handworks[] = array('handwork_id' => $handwork_ids[$x], 'handwork_qty' => $handwork_qty[$x]);
-                }
-            }
-            $d->handworks = json_encode($handworks);   
-            
-            $other = array();   
-            for ($x = 0; $x <= count($others_ids); $x++)
-            {
-                if(!empty($others_ids[$x]) && !empty($others_qty[$x]))
-                {
-                    $other[] = array('other_id' => $others_ids[$x], 'other_qty' => $others_qty[$x]);
-                }
-            }
-            $d->others = json_encode($other);            
             
             $d->cloth_id = _post('cloth_id');
             
@@ -212,8 +182,8 @@ switch ($action) {
         }
         $cloths = ORM::for_table('sys_cloths')->select('id')->select('name')->order_by_asc('name')->find_array();
         $ui->assign('cloths', $cloths);
-        $ui->assign('xheader', Asset::css(['jquery.datatables', 'modal']));
-        $ui->assign('xfooter', Asset::js(['datatables.min', 'modal']));
+        $ui->assign('xheader', Asset::css(['s2/css/select2.min','jquery.datatables', 'modal']));
+        $ui->assign('xfooter', Asset::js(['s2/js/select2.min', 'datatables.min', 'modal']));
         $ui->assign('xfooter2', '<script type="text/javascript" src="' . $_theme . '/lib/design-list.js"></script>');
         $ui->display('manage/list-design.tpl');
         break;
@@ -228,22 +198,10 @@ switch ($action) {
         $request = $_REQUEST;
 
         $columns = [
-            0 => 'id',
-            1 => 'name',
-            2 => 'price',
-            3 => 'created_at'
-        ];
-        /*
-        $columns = [
             0 => 'd.id',
             1 => 'd.name',
-            2 => 'd.price',
-            3 => 'd.created_at'
-            // 2 => 'c.name',
-            // 3 => 'd.price',
-            // 4 => 'd.created_at'
+            2 => 'd.timestamp'
         ];
-        */
 
         $length = isset($request['length']) ? (int)$request['length'] : 25;
         $start  = isset($request['start']) ? max(0, (int)$request['start']) : 0;
@@ -253,34 +211,34 @@ switch ($action) {
 
         $totalData = (int) ORM::for_table('sys_designs')->count();
 
-        $base_q = ORM::for_table('sys_designs');
-        // $base_q = ORM::for_table('sys_designs')->table_alias('d')
-        //     ->select('d.*')
-        //     ->select('c.name', 'cloth_name')
-        //     ->left_outer_join('sys_cloths', ['d.cloth_id', '=', 'c.id'], 'c');
+        // Use aliases + join so searching on cloth name works without SQL errors
+        $base_q = ORM::for_table('sys_designs')->table_alias('d')
+            ->select('d.*')
+            ->select('c.name', 'cloth_name')
+            ->left_outer_join('sys_cloths', ['d.cloth_id', '=', 'c.id'], 'c');
 
         // filters
         // if (!empty($request['cloth_id'])) {
         //     $base_q->where('d.cloth_id', $request['cloth_id']);
         // }
 
-        if (!empty($request['min_price'])) {
-            $base_q->where_gte('price', Finance::amount_fix($request['min_price']));
-        }
+        // if (!empty($request['min_price'])) {
+        //     $base_q->where_gte('price', Finance::amount_fix($request['min_price']));
+        // }
 
-        if (!empty($request['max_price'])) {
-            $base_q->where_lte('price', Finance::amount_fix($request['max_price']));
-        }
+        // if (!empty($request['max_price'])) {
+        //     $base_q->where_lte('price', Finance::amount_fix($request['max_price']));
+        // }
 
         if (!empty($request['search']['value'])) {
             $s = '%' . $request['search']['value'] . '%';
-            $base_q->where_raw('(name LIKE ? OR description LIKE ? OR c.name LIKE ?)', [$s, $s, $s]);
+            $base_q->where_raw('(d.name LIKE ? OR d.description LIKE ? OR c.name LIKE ?)', [$s, $s, $s]);
         }
 
-        if (!empty($request['design_name'])) {
-            $n = '%' . $request['design_name'] . '%';
-            $base_q->where_like('name', $n);
-        }
+        // if (!empty($request['design_name'])) {
+        //     $n = '%' . $request['design_name'] . '%';
+        //     $base_q->where_like('name', $n);
+        // }
 
         $count_q = clone $base_q;
         $totalFiltered = (int) $count_q->count();
@@ -312,7 +270,6 @@ switch ($action) {
             $data[] = [
                 $serial,
                 htmlspecialchars($r['name'], ENT_QUOTES, 'UTF-8'),
-                number_format((float)$r['price'], 2, '.', ''),
                 $img_link,
                 $qr_link,
                 $actions
@@ -332,23 +289,16 @@ switch ($action) {
 
 
     case 'edit-post':
-        if($user->roleid != 0){
-            r2(U."dashboard",'e',$_L['You do not have permission']);
-        }
+        // if($user->roleid != 0){
+        //     r2(U."dashboard",'e',$_L['You do not have permission']);
+        // }
 
     $id = _post('id');
     $name = _post('name');
-    $sales_price = Finance::amount_fix(_post('sales_price'));
+    // $sales_price = Finance::amount_fix(_post('sales_price'));
     $description = _post('description');
-    $fabric_ids  = $_POST['fabric_id'];
-    $fabric_qty  = $_POST['fabric_qty'];
-    $stone_ids   = $_POST['stone_id'];
-    $stone_qty  = $_POST['stone_qty'];   
-    
-    $handwork_ids   = $_POST['handwork_id'];
-    $handwork_qty  = $_POST['handwork_qty'];
-    $others_ids   = $_POST['others_id'];
-    $others_qty  = $_POST['others_qty'];    
+    $component_ids  = $_POST['component_id'] ?? [];
+    $component_qtys = $_POST['component_qty'] ?? [];
 
     $category_ids    = $_POST['category_id'];
     $category_prices = $_POST['category_price'];
@@ -358,9 +308,9 @@ switch ($action) {
     if($name == ''){
         $msg .= 'Item Name is required <br>';
     }
-    if($sales_price == ''){
-        $msg .= 'Sale price is required <br>';
-    }     
+    // if($sales_price == ''){
+    //     $msg .= 'Sale price is required <br>';
+    // }     
     if($category_prices){
         foreach($category_prices as $price) {
             if($price == '') {
@@ -373,63 +323,40 @@ switch ($action) {
     if($msg == ''){
         $d = ORM::for_table('sys_designs')->find_one($id);
         $d->name = $name;
-        $d->price = $sales_price;
+        // $d->price = $sales_price;
+        $d->price = 0; // Sale price optional for designs
         $d->description = $description;
         $d->timestamp = date('Y-m-d H:i:s');
 
-        $fabric = array();   
-        for ($x = 0; $x <= count($fabric_ids); $x++)
-        {
-            if(!empty($fabric_ids[$x]) && !empty($fabric_qty[$x]))
-            {
-                $fabric[] = array('fabric_id' => $fabric_ids[$x], 'fabric_qty' => $fabric_qty[$x]);
+        foreach ($component_ids as $category => $ids) {
+            $qty = $component_qtys[$category] ?? [];
+            $components = [];
+            $count = max(count($ids), count($qty));
+            for ($i = 0; $i < $count; $i++) {
+                if (!empty($ids[$i]) && isset($qty[$i]) && $qty[$i] !== '') {
+                    $components[] = [
+                        'item_id' => $ids[$i],
+                        'qty'     => $qty[$i]
+                    ];
+                }
             }
+            $d->$category = json_encode($components);
         }
-        $d->fabrics = json_encode($fabric);
 
-        $stone = array();   
-        for ($x = 0; $x <= count($stone_ids); $x++)
-        {
-            if(!empty($stone_ids[$x]) && !empty($stone_qty[$x]))
-            {
-                $stone[] = array('stone_id' => $stone_ids[$x], 'stone_qty' => $stone_qty[$x]);
-            }
-        }
-        $d->stones = json_encode($stone);
-        
-        $handworks = array();   
-        for ($x = 0; $x <= count($handwork_ids); $x++)
-        {
-            if(!empty($handwork_ids[$x]) && !empty($handwork_qty[$x]))
-            {
-                $handworks[] = array('handwork_id' => $handwork_ids[$x], 'handwork_qty' => $handwork_qty[$x]);
-            }
-        }
-        $d->handworks = json_encode($handworks);   
-        
-        $other = array();   
-        for ($x = 0; $x <= count($others_ids); $x++)
-        {
-            if(!empty($others_ids[$x]) && !empty($others_qty[$x]))
-            {
-                $other[] = array('other_id' => $others_ids[$x], 'other_qty' => $others_qty[$x]);
-            }
-        }
-        $d->others = json_encode($other);               
-        
         $d->cloth_id = _post('cloth_id');        
         
         // Handle Category Pricing
-        $categoryPricing = [];
-        foreach ($category_ids as $key => $category_id) {
-            if (!empty($category_id) && isset($category_prices[$key])) {
-                $categoryPricing[] = [
-                    'category_id' => $category_id,
-                    'price' => $category_prices[$key]
-                ];
-            }
-        }
-        $d->category_pricing = json_encode($categoryPricing);
+        // $categoryPricing = [];
+        // foreach ($category_ids as $key => $category_id) {
+        //     if (!empty($category_id) && isset($category_prices[$key])) {
+        //         $categoryPricing[] = [
+        //             'category_id' => $category_id,
+        //             'price' => $category_prices[$key]
+        //         ];
+        //     }
+        // }
+        // $d->category_pricing = json_encode($categoryPricing);
+        $d->category_pricing = [];
         
         $old = $d->image;
         $img_array = array();
@@ -484,15 +411,19 @@ switch ($action) {
         $d = ORM::for_table('sys_designs')->find_one($id);
         if($d)
         {
-            $fabrics = ORM::for_table('sys_items')->where('product_category', 'fabric')->find_many();
-            $ui->assign('fabrics', $fabrics); 
-            $stones = ORM::for_table('sys_items')->where('product_category', 'stone_&_size')->find_many();
-            $ui->assign('stones', $stones);  
-
-            $handwork_materials = ORM::for_table('sys_items')->where('product_category', 'handwork_materials')->find_many();
-            $ui->assign('handwork_materials', $handwork_materials); 
-            $others = ORM::for_table('sys_items')->where('product_category', 'others')->find_many();
-            $ui->assign('others', $others);
+            $categories = ORM::for_table('sys_items_category')->find_array();
+            $category_items = [];
+            $components = [];
+            foreach ($categories as $cat) {
+                $val = $cat['value'];
+                $category_items[$val] = ORM::for_table('sys_items')
+                    ->where('product_category', $val)
+                    ->find_array();
+                $components[$val] = json_decode($d[$val], true) ?: [];
+            }
+            $ui->assign('categories', $categories);
+            $ui->assign('category_items', $category_items);
+            $ui->assign('components', $components);
 
             $cloths = ORM::for_table('sys_cloths')->find_many();
             $ui->assign('cloths', $cloths);            
@@ -505,7 +436,6 @@ switch ($action) {
             // // Decode category pricing JSON
             $categoryPricing = json_decode($d->category_pricing, true) ?: [];
             $ui->assign('category_pricing', $categoryPricing);
-            
             $ui->display('manage/edit-design.tpl');
         }
         else
@@ -533,10 +463,10 @@ switch ($action) {
     case 'ajax-delete':
         header('Content-Type: application/json; charset=utf-8');
 
-        if($user->roleid != 0){
-            echo json_encode(['success' => false, 'message' => $_L['You do not have permission']]);
-            break;
-        }
+        // if($user->roleid != 0){
+        //     echo json_encode(['success' => false, 'message' => $_L['You do not have permission']]);
+        //     break;
+        // }
 
         $id = _post('id');
         if(empty($id)){
