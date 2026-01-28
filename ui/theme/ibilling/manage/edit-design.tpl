@@ -23,6 +23,28 @@
         </div>
     </div>
 
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Branch</label>
+        <div class="col-sm-10">
+            <select name="branch_id" class="form-control select2">
+                {if $user->roleid eq 0}
+                    {foreach $branches as $branch}
+                        <option value="{$branch.id}" {if $branch.id == $d.branch_id}selected{/if}>{$branch.alias|default:$branch.account}</option>
+                    {/foreach}
+                {else}
+                    {foreach $branches as $branch}
+                        {if $branch.id == $d.branch_id}
+                            <option value="{$branch.id}" selected>{$branch.alias|default:$branch.account}</option>
+                        {/if}
+                    {/foreach}
+                {/if}
+            </select>
+            {if $user->roleid neq 0}
+                <input type="hidden" name="branch_id" value="{$d.branch_id}">
+            {/if}
+        </div>
+    </div>
+
     <!-- Images -->
     <div class="form-group">
         <label class="col-sm-2 control-label">Gift Box Images</label>

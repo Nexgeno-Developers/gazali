@@ -27,6 +27,28 @@
               <div class="col-lg-10"><input type="text" id="name" name="name" class="form-control" autocomplete="off"></div>
             </div>
             <div class="form-group">
+              <label class="col-lg-2 control-label" for="branch_id">Branch</label>
+              <div class="col-lg-10">
+                <select name="branch_id" id="branch_id" class="form-control select2">
+                  {if $user->roleid eq 0}
+                    <option value="">Select Branch</option>
+                    {foreach $branches as $branch}
+                      <option value="{$branch.id}" {if $default_branch_id eq $branch.id}selected{/if}>{$branch.alias|default:$branch.account}</option>
+                    {/foreach}
+                  {else}
+                    {foreach $branches as $branch}
+                      {if $branch.id eq $default_branch_id}
+                        <option value="{$branch.id}" selected>{$branch.alias|default:$branch.account}</option>
+                      {/if}
+                    {/foreach}
+                  {/if}
+                </select>
+                {if $user->roleid neq 0}
+                  <input type="hidden" name="branch_id" value="{$default_branch_id}">
+                {/if}
+              </div>
+            </div>
+            <div class="form-group">
               <label class="col-lg-2 control-label" for="design_images">Gift Box Images</label>
               <div class="col-lg-10"><input type="file" id="design_images" name="design_images[]" class="form-control" autocomplete="off" accept="image/*"></div>
             </div>

@@ -565,7 +565,9 @@ switch ($action) {
         }
 
         if (!empty($request['product_category'])) {
-            $base_q->where('i.product_category', $request['product_category']);
+            // Case-insensitive match to avoid issues with casing/spacing from UI
+            $category = trim($request['product_category']);
+            $base_q->where_raw('LOWER(i.product_category) = LOWER(?)', [$category]);
         }
 
         // general search

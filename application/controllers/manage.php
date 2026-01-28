@@ -38,7 +38,16 @@ switch ($action) {
         $ui->assign('categories', $categories);
         $ui->assign('category_items', $category_items);
         $cloths = ORM::for_table('sys_cloths')->find_many();
-        $ui->assign('cloths', $cloths);        
+        $ui->assign('cloths', $cloths);
+
+        // Branches (admins see all; staff only their branch)
+        if ($user->roleid == 0) {
+            $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
+        } else {
+            $branches = ORM::for_table('sys_accounts')->where('id', $user->branch_id)->find_array();
+        }
+        $ui->assign('branches', $branches);
+        $ui->assign('default_branch_id', $user->branch_id);
         
         $ui->assign('type','Product');
         
@@ -72,12 +81,13 @@ switch ($action) {
         }
         $description = _post('description');
         $cloth_id    = _post('cloth_id');
+        $branch_id   = _post('branch_id');
         $component_ids  = $_POST['component_id'] ?? [];
         $component_qtys = $_POST['component_qty'] ?? [];
         $categories = ORM::for_table('sys_items_category')->find_array();
 
-        $category_ids    = $_POST['category_id'];
-        $category_prices = $_POST['category_price'];
+        // $category_ids    = $_POST['category_id'] ?? [];
+        // $category_prices = $_POST['category_price'] ?? [];
         
         /*echo '<pre>';
         var_dump($fabric_ids);
@@ -95,17 +105,24 @@ switch ($action) {
             $msg .= 'Item Name is required <br>';
         }
         // sale price optional for gift box; no validation
-        if($category_prices){
-            foreach($category_prices as $price) {
-                if($price == '') {
-                    $msg .= 'Fill Each category price <br>';
-                    break; // Optional: Stop after the first missing price
-                }
-            }
-        }
+        // if(!empty($category_prices)){
+        //     foreach($category_prices as $price) {
+        //         if($price === '' || $price === null) {
+        //             $msg .= 'Fill Each category price <br>';
+        //             break; // Optional: Stop after the first missing price
+        //         }
+        //     }
+        // }
         if($cloth_id == ''){
             $msg .= 'Cloth Type is required <br>';
-        }  
+        }
+
+        if($user->roleid != 0){
+            $branch_id = $user->branch_id;
+        }
+        if(empty($branch_id)){
+            $msg .= 'Branch is required <br>';
+        }
         
         $is_exist = ORM::for_table('sys_designs')->where('name', $name)->count();
         if($is_exist > 0)
@@ -136,31 +153,33 @@ switch ($action) {
             }
             
             $d->cloth_id = _post('cloth_id');
+            $d->branch_id = $branch_id;
             
             // Handle Category Pricing
-            $categoryPricing = [];
-            foreach ($category_ids as $key => $category_id) {
-                if (!empty($category_id) && isset($category_prices[$key])) {
-                    $categoryPricing[] = [
-                        'category_id' => $category_id,
-                        'price' => $category_prices[$key]
-                    ];
-                }
-            }
-            $d->category_pricing = json_encode($categoryPricing);
+            // $categoryPricing = [];
+            // foreach ($category_ids as $key => $category_id) {
+            //     if (!empty($category_id) && isset($category_prices[$key])) {
+            //         $categoryPricing[] = [
+            //             'category_id' => $category_id,
+            //             'price' => $category_prices[$key]
+            //         ];
+            //     }
+            // }
+            // $d->category_pricing = json_encode($categoryPricing);
+            $d->category_pricing = [];
             
             $img_array = array();
-            $count     = count($_FILES['design_images']);
+            $count     = isset($_FILES['design_images']['name']) ? count($_FILES['design_images']['name']) : 0;
 
-            for ($x = 0; $x <= $count; $x++)
+            for ($x = 0; $x < $count; $x++)
             {
-                if($_FILES['design_images']["name"][$x])
+                if(!empty($_FILES['design_images']["name"][$x]))
                 {
                     $filename = 'ui/lib/imgs/design/'.time().$x.'.jpg';
                     $img_array[] = $filename;
                     move_uploaded_file($_FILES['design_images']["tmp_name"][$x], $filename);
                 }
-            }            
+            }
 
             $d->image = json_encode($img_array);
 
@@ -182,6 +201,16 @@ switch ($action) {
         }
         $cloths = ORM::for_table('sys_cloths')->select('id')->select('name')->order_by_asc('name')->find_array();
         $ui->assign('cloths', $cloths);
+        // Branch filter (admins get all, others get own)
+        if ($user->roleid == 0) {
+            $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
+            $default_branch = 'all';
+        } else {
+            $branches = ORM::for_table('sys_accounts')->where('id', $user->branch_id)->find_array();
+            $default_branch = $user->branch_id;
+        }
+        $ui->assign('branches', $branches);
+        $ui->assign('default_branch', $default_branch);
         $ui->assign('xheader', Asset::css(['s2/css/select2.min','jquery.datatables', 'modal']));
         $ui->assign('xfooter', Asset::js(['s2/js/select2.min', 'datatables.min', 'modal']));
         $ui->assign('xfooter2', '<script type="text/javascript" src="' . $_theme . '/lib/design-list.js"></script>');
@@ -199,8 +228,11 @@ switch ($action) {
 
         $columns = [
             0 => 'd.id',
-            1 => 'd.name',
-            2 => 'd.timestamp'
+            1 => 'branch_name',
+            2 => 'd.name',
+            3 => 'd.timestamp',
+            4 => 'd.id', // image
+            5 => 'd.id'  // manage
         ];
 
         $length = isset($request['length']) ? (int)$request['length'] : 25;
@@ -209,13 +241,23 @@ switch ($action) {
         $order_col = isset($columns[$order_index]) ? $columns[$order_index] : 'd.id';
         $order_dir = (isset($request['order'][0]['dir']) && strtolower($request['order'][0]['dir']) === 'asc') ? 'ASC' : 'DESC';
 
-        $totalData = (int) ORM::for_table('sys_designs')->count();
+        // Total (respect branch restriction if non-admin / filter)
+        $total_q = ORM::for_table('sys_designs');
+        $request_branch = isset($request['branch_id']) ? trim($request['branch_id']) : '';
+        if ($user->roleid != 0) {
+            $total_q->where('branch_id', $user->branch_id);
+        } elseif ($request_branch !== '' && $request_branch !== 'all') {
+            $total_q->where('branch_id', $request_branch);
+        }
+        $totalData = (int) $total_q->count();
 
-        // Use aliases + join so searching on cloth name works without SQL errors
+        // Use aliases + join so searching on cloth / branch name works without SQL errors
         $base_q = ORM::for_table('sys_designs')->table_alias('d')
             ->select('d.*')
             ->select('c.name', 'cloth_name')
-            ->left_outer_join('sys_cloths', ['d.cloth_id', '=', 'c.id'], 'c');
+            ->select_expr('COALESCE(b.alias, b.account, \'-\')', 'branch_name')
+            ->left_outer_join('sys_cloths', ['d.cloth_id', '=', 'c.id'], 'c')
+            ->left_outer_join('sys_accounts', ['d.branch_id', '=', 'b.id'], 'b');
 
         // filters
         // if (!empty($request['cloth_id'])) {
@@ -230,9 +272,18 @@ switch ($action) {
         //     $base_q->where_lte('price', Finance::amount_fix($request['max_price']));
         // }
 
+        // branch filter
+        $branch_id = isset($request['branch_id']) ? trim($request['branch_id']) : '';
+        if ($user->roleid != 0) {
+            $branch_id = $user->branch_id;
+        }
+        if ($branch_id !== '' && $branch_id !== 'all') {
+            $base_q->where('d.branch_id', $branch_id);
+        }
+
         if (!empty($request['search']['value'])) {
             $s = '%' . $request['search']['value'] . '%';
-            $base_q->where_raw('(d.name LIKE ? OR d.description LIKE ? OR c.name LIKE ?)', [$s, $s, $s]);
+            $base_q->where_raw('(d.name LIKE ? OR d.description LIKE ? OR c.name LIKE ? OR b.alias LIKE ? OR b.account LIKE ?)', [$s, $s, $s, $s, $s]);
         }
 
         // if (!empty($request['design_name'])) {
@@ -254,6 +305,8 @@ switch ($action) {
         $data = [];
         $serial = $start + 1;
         foreach ($rows as $r) {
+            $branch_text = !empty($r['branch_name']) ? $r['branch_name'] : '-';
+
             $images = json_decode($r['image'], true);
             $first_img = (is_array($images) && !empty($images[0])) ? $images[0] : '';
             $img_link = $first_img ? '<a target="_blank" href="'.$first_img.'">View</a>' : '-';
@@ -269,6 +322,7 @@ switch ($action) {
 
             $data[] = [
                 $serial,
+                htmlspecialchars($branch_text, ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($r['name'], ENT_QUOTES, 'UTF-8'),
                 $img_link,
                 $qr_link,
@@ -297,11 +351,12 @@ switch ($action) {
     $name = _post('name');
     // $sales_price = Finance::amount_fix(_post('sales_price'));
     $description = _post('description');
+    $branch_id   = _post('branch_id');
     $component_ids  = $_POST['component_id'] ?? [];
     $component_qtys = $_POST['component_qty'] ?? [];
 
-    $category_ids    = $_POST['category_id'];
-    $category_prices = $_POST['category_price'];
+    // $category_ids    = $_POST['category_id'] ?? [];
+    // $category_prices = $_POST['category_price'] ?? [];
     
     $msg = '';
    
@@ -311,17 +366,28 @@ switch ($action) {
     // if($sales_price == ''){
     //     $msg .= 'Sale price is required <br>';
     // }     
-    if($category_prices){
-        foreach($category_prices as $price) {
-            if($price == '') {
-                $msg .= 'Fill Each category price <br>';
-                break; // Optional: Stop after the first missing price
-            }
-        }
+    // if(!empty($category_prices)){
+    //     foreach($category_prices as $price) {
+    //         if($price === '' || $price === null) {
+    //             $msg .= 'Fill Each category price <br>';
+    //             break; // Optional: Stop after the first missing price
+    //         }
+    //     }
+    // }
+
+    if($user->roleid != 0){
+        $branch_id = $user->branch_id;
+    }
+    if(empty($branch_id)){
+        $msg .= 'Branch is required <br>';
     }
 
     if($msg == ''){
         $d = ORM::for_table('sys_designs')->find_one($id);
+        if(!$d){
+            echo 'Gift Box not found';
+            break;
+        }
         $d->name = $name;
         // $d->price = $sales_price;
         $d->price = 0; // Sale price optional for designs
@@ -343,7 +409,8 @@ switch ($action) {
             $d->$category = json_encode($components);
         }
 
-        $d->cloth_id = _post('cloth_id');        
+        $d->cloth_id = _post('cloth_id');
+        $d->branch_id = $branch_id;
         
         // Handle Category Pricing
         // $categoryPricing = [];
@@ -360,19 +427,19 @@ switch ($action) {
         
         $old = $d->image;
         $img_array = array();
-        $count     = count($_FILES['design_images']);
+        $count     = isset($_FILES['design_images']['name']) ? count($_FILES['design_images']['name']) : 0;
 
-        if(!empty($_FILES['design_images']["name"][0]))
+        if($count > 0 && !empty($_FILES['design_images']["name"][0]))
         {
-            for ($x = 0; $x <= $count; $x++)
+            for ($x = 0; $x < $count; $x++)
             {
-                if($_FILES['design_images']["name"][$x])
+                if(!empty($_FILES['design_images']["name"][$x]))
                 {
                     $filename = 'ui/lib/imgs/design/'.time().$x.'.jpg';
                     $img_array[] = $filename;
                     move_uploaded_file($_FILES['design_images']["tmp_name"][$x], $filename);
                 }
-            }   
+            }
                      
             $d->image = json_encode($img_array);
 
@@ -428,6 +495,14 @@ switch ($action) {
             $cloths = ORM::for_table('sys_cloths')->find_many();
             $ui->assign('cloths', $cloths);            
             $ui->assign('d',$d);
+
+            // Branches (admins see all; staff only their branch)
+            if ($user->roleid == 0) {
+                $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
+            } else {
+                $branches = ORM::for_table('sys_accounts')->where('id', $user->branch_id)->find_array();
+            }
+            $ui->assign('branches', $branches);
 
             // Fetch category employees
             $categoryEmployees = ORM::for_table('category_employee')->select('id')->select('name')->find_array();

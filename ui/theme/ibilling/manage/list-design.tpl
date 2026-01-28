@@ -11,55 +11,39 @@
                     </div>
             </div>
             <div class="ibox-content">
-{*
                 <form id="designFilters" style="margin-bottom:15px;">
                     <div class="row">
-                       
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="design_name">Gift Box Name</label>
-                                <input type="text" name="design_name" id="design_name" class="form-control" placeholder="Search name">
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="cloth_id">Cloth</label>
-                                <select name="cloth_id" id="cloth_id" class="form-control">
-                                    <option value="">All</option>
-                                    {foreach $cloths as $cloth}
-                                        <option value="{$cloth.id}">{$cloth.name}</option>
-                                    {/foreach}
+                                <label for="branch_id">Branch</label>
+                                <select name="branch_id" id="branch_id" class="form-control select2">
+                                    {if $user->roleid eq 0}
+                                        <option value="all" {if $default_branch eq 'all'}selected{/if}>All</option>
+                                        {foreach $branches as $branch}
+                                            <option value="{$branch.id}" {if $default_branch eq $branch.id}selected{/if}>{$branch.alias|default:$branch.account}</option>
+                                        {/foreach}
+                                    {else}
+                                        {foreach $branches as $branch}
+                                            {if $branch.id eq $default_branch}
+                                                <option value="{$branch.id}" selected>{$branch.alias|default:$branch.account}</option>
+                                            {/if}
+                                        {/foreach}
+                                    {/if}
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="min_price">Min Price</label>
-                                <input type="number" step="0.01" name="min_price" id="min_price" class="form-control" placeholder="0.00">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="max_price">Max Price</label>
-                                <input type="number" step="0.01" name="max_price" id="max_price" class="form-control" placeholder="0.00">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12 text-right">
+                        <div class="col-md-9 text-right" style="margin-top:25px;">
                             <button id="btnDesignFilter" class="btn btn-primary">Filter</button>
                             <button id="btnDesignReset" type="button" class="btn btn-default">Reset</button>
                         </div>
                     </div>
                 </form>
-*}
                 <div class="table-responsive">
                     <table id="design-datatable" class="table table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>#</th>
+                                <th>Branch</th>
                                 <th>Name</th>
                                 {* <th>Cloth</th>
                                 <th>Silai Price</th> *}
@@ -78,11 +62,17 @@
 </div>
 
 <input type="hidden" id="_lan_are_you_sure" value="{$_L['are_you_sure']}">
+<script>
+    var defaultBranch = '{$default_branch|escape:"javascript"}';
+</script>
 {include file="sections/footer.tpl"}
 
 {literal}
 <script>
 $(function(){
+    if ($.fn.select2) {
+        $('.select2').select2();
+    }
     var $filters = $('#designFilters');
     var $modal = $('#ajax-modal');
 
@@ -130,8 +120,8 @@ $(function(){
         ],
         order: [[0, 'desc']],
         columnDefs: [
-            { orderable: false, targets: [4] },
-            { className: 'text-right', targets: [3,4] }
+            { orderable: false, targets: [0,3,4,5] },
+            { className: 'text-right', targets: [4,5] }
         ],
         drawCallback: function(){
             attachRowHandlers();
@@ -145,6 +135,9 @@ $(function(){
 
     $('#btnDesignReset').on('click', function(){
         $filters[0].reset();
+        if (defaultBranch !== undefined) {
+            $('#branch_id').val(defaultBranch).trigger('change');
+        }
         table.ajax.reload();
     });
 
