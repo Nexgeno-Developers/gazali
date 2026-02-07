@@ -223,30 +223,30 @@ switch ($action){
 
                          $sales_price = array();
                          
-                                                  $categories = ORM::for_table(''sys_items_category'')->find_array();
+                         $categories = ORM::for_table('sys_items_category')->find_array();
                          $sales_price = [];
                          $lines = [];
 
                          foreach($categories as $cat){
-                            $column = $cat[''value''];
+                            $column = $cat['value'];
                             if(!isset($design[$column]) || empty($design[$column])){ continue; }
                             $components = json_decode($design[$column], true);
                             if(!is_array($components)){ continue; }
                             $names = [];
                             foreach($components as $row){
-                                $itemId = $row[''item_id''] ?? ($row[$column.''_id''] ?? null);
-                                $qty    = $row[''qty''] ?? ($row[$column.''_qty''] ?? 0);
+                                $itemId = $row['item_id'] ?? ($row[$column.'_id'] ?? null);
+                                $qty    = $row['qty'] ?? ($row[$column.'_qty'] ?? 0);
                                 if(!$itemId){ continue; }
-                                $pr = ORM::for_table(''sys_items'')->find_one($itemId);
+                                $pr = ORM::for_table('sys_items')->find_one($itemId);
                                 if(!$pr){ continue; }
-                                $names[] = $pr[''name''];
-                                $sales_price[] = $pr[''sales_price''] * $qty;
+                                $names[] = $pr['name'];
+                                $sales_price[] = $pr['sales_price'] * $qty;
                             }
                             if(!empty($names)){
-                                $lines[] = '<div><b>'.$cat[''name''].' - </b><br>'.implode(',', $names).'</div>';
+                                $lines[] = '<div><b>'.$cat['name'].' - </b><br>'.implode(',', $names).'</div>';
                             }
                          }
-                         $sales_price[] = $design[''price''];
+                         $sales_price[] = $design['price'];
                          $sales_price = array_sum($sales_price);
                          
                             echo 
