@@ -227,9 +227,17 @@ $(function(){
         $('.cedit_stock').off('click').on('click', function(e){
             e.preventDefault();
             var id = $(this).data('id');
+            var preferredBranch = $(this).data('branch-id');
+            if (!preferredBranch || preferredBranch === 'all') {
+                preferredBranch = $('#branch_id').val() || '';
+            }
+            var stockUrl = base_url + 'ps/edit-form-stock/' + id;
+            if (preferredBranch && preferredBranch !== 'all') {
+                stockUrl += '?branch_id=' + encodeURIComponent(preferredBranch);
+            }
             $('body').modalmanager('loading');
             setTimeout(function(){
-                $modal.load(base_url + 'ps/edit-form-stock/' + id, '', function(){
+                $modal.load(stockUrl, '', function(){
                     $modal.modal();
                 });
             }, 200);

@@ -211,6 +211,7 @@ switch ($action) {
         
         if($msg == ''){
             $d = ORM::for_table('sys_items')->create();
+            $d->branch_id = $branch_id;
             $d->name = $name;
             // $d->sales_price = $sales_price;
             $d->item_number = $item_number;
@@ -306,8 +307,24 @@ switch ($action) {
             $id  = $routes['2'];
             //$stock = json_decode(product_stock_info($id, true));
             $item = ORM::for_table('sys_items')->find_one($id);
-            $credited_stock = ORM::for_table('sys_items_stock')->where('item_id', $id)->where('type', 'credit')->find_many();
-            $debited_stock = ORM::for_table('sys_items_stock')->where('item_id', $id)->where('type', 'debit')->find_many();
+            // Use the product's own branch from sys_items so history is always branch-specific.
+            $product_branch_id = !empty($item['branch_id']) ? (string) $item['branch_id'] : '';
+
+            $credited_q = ORM::for_table('sys_items_stock')
+                ->where('item_id', $id)
+                ->where('type', 'credit');
+            $debited_q = ORM::for_table('sys_items_stock')
+                ->where('item_id', $id)
+                ->where('type', 'debit');
+
+            // Apply branch filter to both history tables.
+            if ($product_branch_id !== '') {
+                $credited_q->where('branch_id', $product_branch_id);
+                $debited_q->where('branch_id', $product_branch_id);
+            }
+
+            $credited_stock = $credited_q->find_many();
+            $debited_stock = $debited_q->find_many();
 
             $branch_stock = product_stock_info_by_branch($id);
             // Ensure every branch is represented (even if zero stock) for transfer UI
@@ -329,27 +346,39 @@ switch ($action) {
             $ui->assign('item', $item);
             $ui->assign('credited_stock', $credited_stock);
             $ui->assign('debited_stock', $debited_stock);
+            $ui->assign('selected_branch_id', $product_branch_id);
+            $ui->assign('selected_branch_name', get_branch_name($product_branch_id, 'alias'));
+            $ui->assign('selected_branch_stock_count', isset($branch_stock[$product_branch_id]) ? $branch_stock[$product_branch_id] : 0);
 
             // Fetch distinct transfer refs for this item
-            $refs = ORM::for_table('sys_items_stock')
+            $refs_q = ORM::for_table('sys_items_stock')
                 ->select('transfer_ref')
                 ->where('item_id', $id)
                 ->where_not_null('transfer_ref')
                 ->where_not_equal('transfer_ref', '')
                 ->group_by('transfer_ref')
                 ->order_by_desc('transfer_ref') // or order_by_desc('timestamp') if available
-                ->limit(50)
-                ->find_many();
+                ->limit(50);
+            // Keep transfer data branch-scoped as well.
+            if ($product_branch_id !== '') {
+                $refs_q->where('branch_id', $product_branch_id);
+            }
+            $refs = $refs_q->find_many();
 
             $transfer_data = [];
 
             foreach ($refs as $r) {
                 $ref = $r->transfer_ref;
 
-                // Get all rows for this ref and this item
-                $entries = ORM::for_table('sys_items_stock')
+                $query = ORM::for_table('sys_items_stock')
                     ->where('item_id', $id)
-                    ->where('transfer_ref', $ref)
+                    ->where('transfer_ref', $ref);
+
+                if ($product_branch_id !== '') {
+                    $query->where('branch_id', $product_branch_id);
+                }
+
+                $entries = $query
                     ->order_by_asc('id')
                     ->find_many();
 
@@ -626,9 +655,25 @@ switch ($action) {
             $qr_image = qrcode_generate('P-' . $r['id']);
             $qr_link = '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>';
 
-            $actions = '<a href="'. U .'ps/view/'. $r['id'] .'" class="btn btn-success btn-xs"><i class="fa fa-bar-chart"></i> Stock History</a> ';
+            $preferred_branch_id = '';
+            if ($branch_id !== '' && $branch_id !== 'all') {
+                $preferred_branch_id = $branch_id;
+            } elseif (!empty($branch_stock)) {
+                foreach ($branch_stock as $bid => $qty) {
+                    if ($bid !== null && $bid !== '') {
+                        $preferred_branch_id = $bid;
+                        break;
+                    }
+                }
+            }
+
+            $history_url = U . 'ps/view/' . $r['id'];
+            if (!empty($preferred_branch_id)) {
+                $history_url .= '?branch_id=' . urlencode((string) $preferred_branch_id);
+            }
+            $actions = '<a href="'. $history_url .'" class="btn btn-success btn-xs"><i class="fa fa-bar-chart"></i> Stock History</a> ';
             // if ($user->roleid == 0) {
-                $actions .= '<a href="#" class="btn btn-warning btn-xs cedit_stock" data-id="'.$r['id'].'"><i class="fa fa-plus"></i> Add Stock</a> ';
+                $actions .= '<a href="#" class="btn btn-warning btn-xs cedit_stock" data-id="'.$r['id'].'" data-branch-id="'.htmlspecialchars((string)$preferred_branch_id, ENT_QUOTES, 'UTF-8').'"><i class="fa fa-plus"></i> Add Stock</a> ';
                 $actions .= '<a href="#" class="btn btn-primary btn-xs cedit" data-id="'.$r['id'].'"><i class="fa fa-pencil"></i> Edit</a> ';
                 $actions .= '<a href="#" class="btn btn-danger btn-xs cdelete cdelete-product" data-id="'.$r['id'].'" data-filter="'.$r['product_type'].'"><i class="fa fa-trash"></i> Delete</a>';
             // }
@@ -754,7 +799,31 @@ switch ($action) {
         $purchase_price = _post('purchase_price');
         $product_stock  = _post('product_stock');
         $product_type   = _post('product_type');
-        $branch_id   = _post('branch_id');
+        $branch_id   = trim((string) _post('branch_id'));
+        if ($branch_id === '' || $branch_id === 'all') {
+            $branch_stock = product_stock_info_by_branch($id);
+            if (is_array($branch_stock)) {
+                foreach ($branch_stock as $bid => $qty) {
+                    if ($bid !== null && $bid !== '') {
+                        $branch_id = (string) $bid;
+                        break;
+                    }
+                }
+            }
+        }
+        if ($branch_id === '' || $branch_id === 'all') {
+            if (!empty($user->branch_id)) {
+                $branch_id = (string) $user->branch_id;
+            } else {
+                $first_branch = ORM::for_table('sys_accounts')->order_by_asc('account')->find_one();
+                if ($first_branch) {
+                    $branch_id = (string) $first_branch->id;
+                }
+            }
+        }
+        if ($branch_id === '' || $branch_id === 'all') {
+            $msg .= '<p>Branch is required</p>';
+        }
         
         if($product_type == 'customize'){
             if(empty($vendor_id)){
@@ -966,7 +1035,27 @@ switch ($action) {
             if($d)
             {
                 $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
+                $selected_branch_id = isset($_GET['branch_id']) ? trim((string) $_GET['branch_id']) : '';
+                if ($selected_branch_id === '' || $selected_branch_id === 'all') {
+                    $branch_stock = product_stock_info_by_branch($id);
+                    if (is_array($branch_stock)) {
+                        foreach ($branch_stock as $bid => $qty) {
+                            if ($bid !== null && $bid !== '') {
+                                $selected_branch_id = (string) $bid;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (($selected_branch_id === '' || $selected_branch_id === 'all') && !empty($user->branch_id)) {
+                    $selected_branch_id = (string) $user->branch_id;
+                }
+                if (($selected_branch_id === '' || $selected_branch_id === 'all') && !empty($branches)) {
+                    $selected_branch_id = (string) $branches[0]['id'];
+                }
+
                 $ui->assign('branches',$branches);
+                $ui->assign('selected_branch_id', $selected_branch_id);
                 
                 $ui->assign('d',$d);
                 $ui->assign('vendorList',$vendorList);

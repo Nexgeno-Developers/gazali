@@ -5,13 +5,13 @@
 <div class="modal-body">
 	<form class="form-horizontal" role="form" id="edit_form_stock" method="post">
 	
-		<div class="form-group">
+		<div class="form-group hide">
 			<label class="col-lg-2 control-label" for="branch_id">Branch</label>
 			<div class="col-lg-10">
 				<select name="branch_id" id="branch_id" class="form-control" required>
 					<option value="">Select Branch</option>
 					{foreach $branches as $branch}
-						<option value="{$branch.id}">{$branch.alias|default:$branch.account}</option>
+						<option value="{$branch.id}" {if $branch.id eq $selected_branch_id}selected{/if}>{$branch.alias|default:$branch.account}</option>
 					{/foreach}
 				</select>
 			</div>
