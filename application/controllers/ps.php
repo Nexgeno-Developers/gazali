@@ -511,8 +511,8 @@ switch ($action) {
         $ui->assign('branches', $branches);
         $ui->assign('type','Product');
 
-        $ui->assign('xheader', Asset::css(['datatables.min', 'buttons.dataTables.min', 'modal']));
-        $ui->assign('xfooter', Asset::js(['datatables.min', 'dataTables.buttons.min', 'buttons.print.min', 'modal', 'numeric']));
+        $ui->assign('xheader', Asset::css(['s2/css/select2.min','datatables.min', 'buttons.dataTables.min', 'modal']));
+        $ui->assign('xfooter', Asset::js(['s2/js/select2.min','datatables.min', 'dataTables.buttons.min', 'buttons.print.min', 'modal', 'numeric']));
         $ui->assign('xfooter2', '<script type="text/javascript" src="' . $_theme . '/lib/ps-list.js"></script>');
         $ui->display('ps-list.tpl');
         break;

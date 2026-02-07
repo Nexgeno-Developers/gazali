@@ -4,7 +4,7 @@
     <div class="col-md-12">
         <div class="ibox float-e-margins">
             <div class="ibox-title">
-                <h5>{$_L['List']} {$_L['Products']}</h5>
+                <h5>{$_L['List']} Products</h5>
                 {if $user->roleid eq 0}
                     <div class="ibox-tools">
                         <a href="{$_url}ps/p-new" class="btn btn-primary btn-xs">
@@ -19,7 +19,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="branch_id">Branch</label>
-                                <select name="branch_id" id="branch_id" class="form-control">
+                                <select name="branch_id" id="branch_id" class="form-control select2">
                                     {if $user->roleid eq 0}
                                         <option value="all">All</option>
                                         {foreach $branches as $branch}
@@ -113,6 +113,9 @@
 {literal}
 <script>
 $(function(){
+    if ($.fn.select2) {
+        $('.select2').select2();
+    }
     function gramsToTola(grams){
         return grams / 11.66;
     }
