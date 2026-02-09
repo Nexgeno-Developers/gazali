@@ -90,6 +90,17 @@ switch ($action) {
         $ui->assign('comp', $comp);
         $ui->assign('idate', date('Y-m-d'));
 
+        $sales_users_q = ORM::for_table('sys_users')
+            ->select('id')
+            ->select('fullname')
+            ->select('username')
+            ->order_by_asc('fullname');
+        if ((int) $user->roleid !== 0) {
+            $sales_users_q->where('branch_id', $user->branch_id);
+        }
+        $ui->assign('sales_users', $sales_users_q->find_array());
+        $ui->assign('selected_sales_person', (int) $user['id']);
+
 
 				if($config['i_driver'] == 'default'){
 						$js_file = 'invoice';
@@ -186,6 +197,16 @@ $(document).ready(function () {
             $ui->assign('i', $d);
 						$comp = ORM::for_table('sys_accounts')->select('id')->select('account')->order_by_asc('id')->find_many();
 						$ui->assign('comp', $comp);
+            $sales_users_q = ORM::for_table('sys_users')
+                ->select('id')
+                ->select('fullname')
+                ->select('username')
+                ->order_by_asc('fullname');
+            if ((int) $user->roleid !== 0) {
+                $sales_users_q->where('branch_id', $user->branch_id);
+            }
+            $ui->assign('sales_users', $sales_users_q->find_array());
+            $ui->assign('selected_sales_person', !empty($d['created_by']) ? (int) $d['created_by'] : (int) $user['id']);
             $items = ORM::for_table('sys_invoiceitems')->where('invoiceid', $id)->order_by_asc('id')->find_many();
 						$ui->assign('items', $items);
 
@@ -505,6 +526,19 @@ $(document).ready(function () {
 /* 				var_dump($_POST);exit; */
         $cid = _post('cid');
 				$company = _post('company');
+        $sales_person_id = (int) _post('sales_person');
+        if ($sales_person_id <= 0) {
+            $sales_person_id = (int) $user['id'];
+        }
+
+        $sales_person_q = ORM::for_table('sys_users')->select('id')->where('id', $sales_person_id);
+        if ((int) $user->roleid !== 0) {
+            $sales_person_q->where('branch_id', $user->branch_id);
+        }
+        $sales_person = $sales_person_q->find_one();
+        if (!$sales_person) {
+            $sales_person_id = (int) $user['id'];
+        }
 				
         $u = ORM::for_table('crm_accounts')->find_one($cid);
 
@@ -1174,7 +1208,7 @@ $(document).ready(function () {
             $d->currency = $currency;
             $d->currency_symbol = $currency_symbol;
             $d->currency_rate = $currency_rate;
-            $d->created_by = $user['id'];
+            $d->created_by = $sales_person_id;
             $d->d_measure  = $d_measure;
             $d->additional_imgs = json_encode($img_array);
             $d->updated_at = time();
@@ -1232,11 +1266,11 @@ $(document).ready(function () {
                         } 
                         
                         $other_l   = array();
-                        $other_l[] = ($_POST['is_pocket'] == 'yes') ? 'pocket' : null;
-                        $other_l[] = ($_POST['is_zip'] == 'yes') ? 'zip' : null;
-                        $other_l[] = ($_POST['is_beading'] == 'yes') ? 'beading' : null;
-                        $other_l[] = ($_POST['is_folding'] == 'yes') ? 'folding' : null;
-                        $other_l[] = ($_POST['is_pico'] == 'yes') ? 'pico' : null;
+                        $other_l[] = (_post('is_pocket') == 'yes') ? 'pocket' : null;
+                        $other_l[] = (_post('is_zip') == 'yes') ? 'zip' : null;
+                        $other_l[] = (_post('is_beading') == 'yes') ? 'beading' : null;
+                        $other_l[] = (_post('is_folding') == 'yes') ? 'folding' : null;
+                        $other_l[] = (_post('is_pico') == 'yes') ? 'pico' : null;
                         $other_l   = array_filter($other_l);
                         
                         foreach($other_l as $other)
@@ -1317,7 +1351,7 @@ $(document).ready(function () {
 								$d->save(); //save
                         }*/ 
                         
-                        if($_POST['is_umbrella'] == 'yes')
+                        if(_post('is_umbrella') == 'yes')
                         {
 								//$prod = ORM::for_table('sys_items')->where('item_number',$_POST['s_id'][$i] )->find_one();
 								
@@ -1325,7 +1359,7 @@ $(document).ready(function () {
 								$d->invoiceid = $invoiceid;
 								$d->userid = $cid;
 								$d->itemcode = 0;
-								$d->description = 'Umbrella (Size : '.$_POST['umbrella_size'].')';
+								$d->description = 'Umbrella (Size : '._post('umbrella_size').')';
 								$d->qty = 1;
 								$d->amount = 0;
 								$ptaxrate = 0;
@@ -1344,7 +1378,7 @@ $(document).ready(function () {
 								$d->save(); //save
                         } 
                         
-                        if($_POST['is_dupatta'] == 'yes')
+                        if(_post('is_dupatta') == 'yes')
                         {
 								//$prod = ORM::for_table('sys_items')->where('item_number',$_POST['s_id'][$i] )->find_one();
 								
@@ -1352,7 +1386,7 @@ $(document).ready(function () {
 								$d->invoiceid = $invoiceid;
 								$d->userid = $cid;
 								$d->itemcode = 0;
-								$d->description = 'Dupatta (Size : '.$_POST['dupatta_size'].')';
+								$d->description = 'Dupatta (Size : '._post('dupatta_size').')';
 								$d->qty = 1;
 								$d->amount = 0;
 								$ptaxrate = 0;
@@ -2006,6 +2040,19 @@ $(".cdelete").click(function (e) {
         $its = strtotime($idate);
         $duedate = _post('duedate');
         $company = _post('company');
+        $sales_person_id = (int) _post('sales_person');
+        if ($sales_person_id <= 0) {
+            $sales_person_id = (int) $user['id'];
+        }
+
+        $sales_person_q = ORM::for_table('sys_users')->select('id')->where('id', $sales_person_id);
+        if ((int) $user->roleid !== 0) {
+            $sales_person_q->where('branch_id', $user->branch_id);
+        }
+        $sales_person = $sales_person_q->find_one();
+        if (!$sales_person) {
+            $sales_person_id = (int) $user['id'];
+        }
         
 
         $msg = '';
@@ -2274,6 +2321,7 @@ $inv_prefix = '';
 								'currency' 				=> $currency,
 								'currency_symbol'	=> $currency_symbol,
                                 'currency_rate' 	=> $currency_rate,
+                                'created_by'      => $sales_person_id,
                                 'd_measure'         => $d_measure,
                                 'additional_imgs' => json_encode($img_array),
                                 'updated_at' => time()
@@ -2329,11 +2377,11 @@ $inv_prefix = '';
                             }
 
                         $other_l   = array();
-                        $other_l[] = ($_POST['is_pocket'] == 'yes') ? 'pocket' : null;
-                        $other_l[] = ($_POST['is_zip'] == 'yes') ? 'zip' : null;
-                        $other_l[] = ($_POST['is_beading'] == 'yes') ? 'beading' : null;
-                        $other_l[] = ($_POST['is_folding'] == 'yes') ? 'folding' : null;
-                        $other_l[] = ($_POST['is_pico'] == 'yes') ? 'pico' : null;
+                        $other_l[] = (_post('is_pocket') == 'yes') ? 'pocket' : null;
+                        $other_l[] = (_post('is_zip') == 'yes') ? 'zip' : null;
+                        $other_l[] = (_post('is_beading') == 'yes') ? 'beading' : null;
+                        $other_l[] = (_post('is_folding') == 'yes') ? 'folding' : null;
+                        $other_l[] = (_post('is_pico') == 'yes') ? 'pico' : null;
                         $other_l   = array_filter($other_l);
                         
                         foreach($other_l as $other)
@@ -2415,7 +2463,7 @@ $inv_prefix = '';
                                     $d->save(); //save
                             }*/  
                             
-                            if($_POST['is_umbrella'] == 'yes')
+                            if(_post('is_umbrella') == 'yes')
                             {
                                     //$prod = ORM::for_table('sys_items')->where('item_number',$_POST['s_id'][$i] )->find_one();
                                     
@@ -2423,7 +2471,7 @@ $inv_prefix = '';
                                     $d->invoiceid = $iid;
                                     $d->userid = $cid;
                                     $d->itemcode = 0;
-                                    $d->description = 'Umbrella (Size : '.$_POST['umbrella_size'].')';
+                                    $d->description = 'Umbrella (Size : '._post('umbrella_size').')';
                                     $d->qty = 1;
                                     $d->amount = 0;
                                     $ptaxrate = 0;
@@ -2442,7 +2490,7 @@ $inv_prefix = '';
                                     $d->save(); //save
                             }
 
-                            if($_POST['is_dupatta'] == 'yes')
+                            if(_post('is_dupatta') == 'yes')
                             {
                                     //$prod = ORM::for_table('sys_items')->where('item_number',$_POST['s_id'][$i] )->find_one();
                                     
@@ -2450,7 +2498,7 @@ $inv_prefix = '';
                                     $d->invoiceid = $iid;
                                     $d->userid = $cid;
                                     $d->itemcode = 0;
-                                    $d->description = 'Dupatta (Size : '.$_POST['dupatta_size'].')';
+                                    $d->description = 'Dupatta (Size : '._post('dupatta_size').')';
                                     $d->qty = 1;
                                     $d->amount = 0;
                                     $ptaxrate = 0;
@@ -4680,7 +4728,8 @@ $(".cdelete").click(function (e) {
 
 
 
-        $design_img = json_decode($design['image'], true)[0]; 
+        $design_images = json_decode($design['image'], true);
+        $design_img = (is_array($design_images) && isset($design_images[0])) ? $design_images[0] : '';
         $design_image = $design_img ? '<a target="_blank" href="'.$design_img.'"><img width="50px" height="50px" src="'.$design_img.'"></a>' : '-';
 
         echo $items;
@@ -4775,7 +4824,8 @@ $(".cdelete").click(function (e) {
         }
 
 
-        $design_img = json_decode($design['image'], true)[0]; 
+        $design_images = json_decode($design['image'], true);
+        $design_img = (is_array($design_images) && isset($design_images[0])) ? $design_images[0] : '';
         $design_image = $design_img ? '<a target="_blank" href="'.$design_img.'"><img width="50px" height="50px" src="'.$design_img.'"></a>' : '-';
 
         echo $items;

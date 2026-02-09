@@ -404,6 +404,16 @@ input[type=number]::-webkit-outer-spin-button {
 								{/if}
 							</select>
 						</div>
+						<div class="form-group">
+							<label for="sales_person">Sales person</label>
+							<select id="sales_person" name="sales_person" class="form-control" required>
+								{foreach $sales_users as $su}
+									<option value="{$su.id}" {if $selected_sales_person eq $su.id}selected{/if}>
+										{$su.fullname|default:$su.username}
+									</option>
+								{/foreach}
+							</select>
+						</div>
 						{*<div class="form-group">
 							<label for="cid">{$_L['Customer']}</label>
 							<select id="cid" name="cid" class="form-control">

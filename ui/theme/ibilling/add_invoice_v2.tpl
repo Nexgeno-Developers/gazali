@@ -341,6 +341,17 @@ input[type=number]::-webkit-outer-spin-button {
 						<!-- hidden branch id -->
 						<input type="hidden" name="company_branch_id" id="company_branch_id" value="">
 					</div>		
+
+					<div class="form-group">
+						<label for="sales_person">Sales person</label>
+						<select id="sales_person" name="sales_person" class="form-control" required>
+							{foreach $sales_users as $su}
+								<option value="{$su.id}" {if $selected_sales_person eq $su.id}selected{/if}>
+									{$su.fullname|default:$su.username}
+								</option>
+							{/foreach}
+						</select>
+					</div>
 					
 					<div class="form-group">
 						<label for="advance_amount">Advance Amount</label>
