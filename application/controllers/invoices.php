@@ -2793,12 +2793,54 @@ $inv_prefix = '';
 
         $id = $routes['2'];
         if ($_app_stage == 'Demo') {
-            r2(U . 'accounts/list', 'e', 'Sorry! Deleting Account is disabled in the demo mode.');
+            r2(U . 'invoices/list', 'e', 'Sorry! Deleting Invoice is disabled in the demo mode.');
         }
-        $d = ORM::for_table('crm_accounts')->find_one($id);
-        if ($d) {
-            $d->delete();
-            r2(U . 'accounts/list', 's', $_L['account_delete_successful']);
+        $invoice = ORM::for_table('sys_invoices')->find_one($id);
+        if ($invoice) {
+            try {
+                $db = ORM::get_db();
+                if (!$db->inTransaction()) {
+                    $db->beginTransaction();
+                }
+
+                $allocations = ORM::for_table('invoice_alocation')
+                    ->select('id')
+                    ->where('invoice_id', $id)
+                    ->find_array();
+                $allocation_ids = array();
+                foreach ($allocations as $alloc) {
+                    if (!empty($alloc['id'])) {
+                        $allocation_ids[] = (int) $alloc['id'];
+                    }
+                }
+
+                if (!empty($allocation_ids)) {
+                    ORM::for_table('crm_timesheet')
+                        ->where_in('invoice_alocation_id', $allocation_ids)
+                        ->delete_many();
+                }
+
+                ORM::for_table('invoice_alocation')->where('invoice_id', $id)->delete_many();
+                ORM::for_table('sys_items_stock')->where('invoice_id', $id)->delete_many();
+                ORM::for_table('sys_invoiceitems')->where('invoiceid', $id)->delete_many();
+                ORM::for_table('sys_invoices_status')->where('invoice_id', $id)->delete_many();
+                ORM::for_table('sys_transactions')->where('iid', $id)->delete_many();
+                $invoice->delete();
+
+                if ($db->inTransaction()) {
+                    $db->commit();
+                }
+
+                r2(U . 'invoices/list', 's', 'Invoice deleted successfully.');
+            } catch (Exception $e) {
+                $db = ORM::get_db();
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+                r2(U . 'invoices/list', 'e', 'Error deleting invoice: ' . $e->getMessage());
+            }
+        } else {
+            r2(U . 'invoices/list', 'e', 'Invoice not found.');
         }
 
         break;
@@ -2819,12 +2861,48 @@ $inv_prefix = '';
             $invoice = ORM::for_table('sys_invoices')->find_one($id);
             if ($invoice) {
                 try {
+                    $db = ORM::get_db();
+                    if (!$db->inTransaction()) {
+                        $db->beginTransaction();
+                    }
+
+                    $allocations = ORM::for_table('invoice_alocation')
+                        ->select('id')
+                        ->where('invoice_id', $id)
+                        ->find_array();
+                    $allocation_ids = array();
+                    foreach ($allocations as $alloc) {
+                        if (!empty($alloc['id'])) {
+                            $allocation_ids[] = (int) $alloc['id'];
+                        }
+                    }
+
+                    if (!empty($allocation_ids)) {
+                        ORM::for_table('crm_timesheet')
+                            ->where_in('invoice_alocation_id', $allocation_ids)
+                            ->delete_many();
+                    }
+
+                    ORM::for_table('invoice_alocation')->where('invoice_id', $id)->delete_many();
+                    ORM::for_table('sys_items_stock')->where('invoice_id', $id)->delete_many();
+                    ORM::for_table('sys_invoiceitems')->where('invoiceid', $id)->delete_many();
+                    ORM::for_table('sys_invoices_status')->where('invoice_id', $id)->delete_many();
+                    ORM::for_table('sys_transactions')->where('iid', $id)->delete_many();
                     $invoice->delete();
+
+                    if ($db->inTransaction()) {
+                        $db->commit();
+                    }
+
                     echo json_encode([
                         'success' => true,
                         'message' => 'Invoice deleted successfully.'
                     ]);
                 } catch (Exception $e) {
+                    $db = ORM::get_db();
+                    if ($db->inTransaction()) {
+                        $db->rollBack();
+                    }
                     echo json_encode([
                         'success' => false,
                         'message' => 'Error deleting invoice: ' . $e->getMessage()
