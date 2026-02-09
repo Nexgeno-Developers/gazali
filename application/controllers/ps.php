@@ -62,14 +62,50 @@ switch ($action) {
         break;*/
 
         case 'modal-list':
-		
-        $customize = ORM::for_table('sys_items')->where('product_type', 'customize')->order_by_asc('name')->find_many();
-        $ui->assign('p_customize', $customize);    
+        $requested_branch_id = isset($_REQUEST['branch_id']) ? trim((string) $_REQUEST['branch_id']) : '';
+        $is_super_admin = ((int) $user->roleid === 0);
+        $effective_branch_id = '';
 
-        $readymade = ORM::for_table('sys_items')->where('product_type', 'readymade')->order_by_asc('name')->find_many();
-        $ui->assign('p_readymade', $readymade);         
+        if ($is_super_admin) {
+            if ($requested_branch_id !== '' && $requested_branch_id !== 'all') {
+                $effective_branch_id = $requested_branch_id;
+            }
+        } else {
+            $effective_branch_id = !empty($user->branch_id) ? (string) $user->branch_id : '';
+        }
 
-  
+        $customize_q = ORM::for_table('sys_items')->where('product_type', 'customize');
+        $readymade_q = ORM::for_table('sys_items')->where('product_type', 'readymade');
+
+        if ($effective_branch_id !== '') {
+            $customize_q->where('branch_id', $effective_branch_id);
+            $readymade_q->where('branch_id', $effective_branch_id);
+        }
+
+        $customize = $customize_q->order_by_asc('name')->find_many();
+        $ui->assign('p_customize', $customize);
+
+        $readymade = $readymade_q->order_by_asc('name')->find_many();
+        $ui->assign('p_readymade', $readymade);
+
+        if ($is_super_admin) {
+            $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
+            $selected_branch_id = ($requested_branch_id === '') ? 'all' : $requested_branch_id;
+        } else {
+            $branches = array();
+            if (!empty($user->branch_id)) {
+                $current_branch = ORM::for_table('sys_accounts')->find_one($user->branch_id);
+                if ($current_branch) {
+                    $branches[] = $current_branch->as_array();
+                }
+            }
+            $selected_branch_id = $effective_branch_id;
+        }
+
+        $ui->assign('branches', $branches);
+        $ui->assign('selected_branch_id', $selected_branch_id);
+        $ui->assign('is_super_admin', $is_super_admin);
+
         $ui->display('product-modal-list-ps.tpl');
               
           break;
@@ -653,7 +689,9 @@ switch ($action) {
             $desc = !empty($r['description']) ? htmlspecialchars($r['description'], ENT_QUOTES, 'UTF-8') : '-';
 
             $qr_image = qrcode_generate('P-' . $r['id']);
-            $qr_link = '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>';
+            $qr_link = !empty($qr_image)
+                ? '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>'
+                : '-';
 
             $preferred_branch_id = '';
             if ($branch_id !== '' && $branch_id !== 'all') {

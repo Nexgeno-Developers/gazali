@@ -1276,29 +1276,28 @@ include 'third_party/phpqrcode/qrlib.php';
 
 function qrcode_generate($text)
 {
-    // Include the qrlib file
-    
-    //$text = "GEEKS FOR GEEKS";
-    
-    // $path variable store the location where to 
-    // store image and $file creates directory name
-    // of the QR code file by using 'uniqid'
-    // uniqid creates unique id based on microtime
     $path = 'ui/lib/imgs/qrcode/';
-    $file = $path.$text.".jpg";
-    
-    // $ecc stores error correction capability('L')
+    $file = $path . $text . '.png';
+
+    // Ensure output directory exists before generating the file.
+    if (!is_dir($path) && !@mkdir($path, 0775, true)) {
+        return '';
+    }
+
+    if (!is_writable($path)) {
+        return '';
+    }
+
     $ecc = 'L';
     $pixel_Size = 4;
     $frame_Size = 1;
-    
-    // Generates QR Code and Stores it in directory given
-    QRcode::png($text, $file, $ecc, $pixel_Size, $frame_Size);
-    
-    // Displaying the stored QR code from directory
-    //echo "<center><img src='".$file."'></center>";
 
-    return $file;
+    // Generate QR only when file is missing to reduce repeated writes.
+    if (!file_exists($file)) {
+        QRcode::png($text, $file, $ecc, $pixel_Size, $frame_Size);
+    }
+
+    return file_exists($file) ? $file : '';
 }
 
 function wati_notifiation($name, $invoicenumber, $paymentstatus, $orderstatus, $ordertrack_url, $phone){

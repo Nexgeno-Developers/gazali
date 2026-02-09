@@ -312,7 +312,9 @@ switch ($action) {
             $img_link = $first_img ? '<a target="_blank" href="'.$first_img.'">View</a>' : '-';
 
             $qr_image = qrcode_generate('D-' . $r['id']);
-            $qr_link = '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>';
+            $qr_link = !empty($qr_image)
+                ? '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>'
+                : '-';
 
             $actions = '<a href="'. U .'manage/view/'. $r['id'] .'" class="btn btn-success btn-xs"><i class="fa fa-bar-chart"></i> History</a> ';
             // if($user->roleid == 0){

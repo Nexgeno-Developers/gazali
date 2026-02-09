@@ -183,8 +183,8 @@ $(document).ready(function () {
     $('#item-add').on('click', function(){
         // create the backdrop and wait for next modal to be triggered
         $('body').modalmanager('loading');
-
-        $modal.load( _url + 'ps/modal-list/', '', function(){
+        var branchId = $('#company').find(':selected').data('branch') || $('#company').val() || 'all';
+        $modal.load( _url + 'ps/modal-list/', { branch_id: branchId }, function(){
             $modal.modal();
         });
     });
