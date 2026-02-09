@@ -7,6 +7,9 @@ input[type=number]::-webkit-outer-spin-button {
     appearance: none;
     margin: 0; 
 }
+.hide{
+	display: none;
+}
 </style>
 <div class="row" id="ibox_form">
 	<form id="invform" method="post">
@@ -45,7 +48,7 @@ input[type=number]::-webkit-outer-spin-button {
 									<br>
 								</div>											
 							</div>
-							<div class="row">
+							<div class="row hide">
 								<div class="col-md-4 col_with_21">
 									<h3 style="margin-top: 25px;"><i class="fa fa-tachometer" aria-hidden="true"></i>  Measurements - </h3>
 								</div>
@@ -98,7 +101,7 @@ input[type=number]::-webkit-outer-spin-button {
 									</div>
 								</div>					
 							</div>
-							<div class="row">
+							<div class="row hide">
 									<div class="col-md-4 col_with_21">
 										<h3><i class="fa fa-user" aria-hidden="true"></i> Other - </h3>
 									</div>						
@@ -136,7 +139,7 @@ input[type=number]::-webkit-outer-spin-button {
 									</div>					
 							</div>
 
-							<div class="row">
+							<div class="row hide">
 									<div class="col-md-4 col_with_21">
 										<h3><i class="fa fa-user" aria-hidden="true"></i> File Upload - </h3>
 									</div>

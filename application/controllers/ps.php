@@ -223,7 +223,8 @@ switch ($action) {
             $d->product_category = $product_category;
             $d->product_stock = $product_stock;
             $d->product_stock_type = $product_stock_type;
-            $d->design_id = $_POST['design_id'];
+            $design_id = _post('design_id');
+            $d->design_id = $design_id;
 
             if($_FILES['product_image']["name"])
             {
@@ -249,7 +250,6 @@ switch ($action) {
             }
             
             //deduct substock start
-            $design_id = $_POST['design_id'];
             if(!empty($design_id)){
                 $design    = ORM::for_table('sys_designs')->find_one($design_id);
                 if ($design) {
@@ -1126,7 +1126,11 @@ switch ($action) {
 
         case 'get-design-subproduct-amount':
 
-            $design_id = $_POST['design_id'];
+            $design_id = _post('design_id');
+            if (empty($design_id)) {
+                echo json_encode(['sale_p' => 0, 'purchase_p' => 0]);
+                break;
+            }
             $design    = ORM::for_table('sys_designs')->find_one($design_id);
             if (!$design) {
                 echo json_encode(['sale_p' => 0, 'purchase_p' => 0]);

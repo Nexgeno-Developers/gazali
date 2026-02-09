@@ -14,6 +14,9 @@ input[type=number]::-webkit-outer-spin-button {
 .pad-2 {
     padding: 2px;
 }
+.hide{
+	display: none;
+}
 </style>
 
 <div class="row" id="ibox_form">
@@ -53,7 +56,7 @@ input[type=number]::-webkit-outer-spin-button {
 						    <br>
 						</div>											
 					</div>
-					<div class="row">
+					<div class="row hide">
 						<div class="col-md-12 col-sm-12 col-xs-12 col-12">
 							<h3 style="margin-top: 25px; "><i class="fa fa-tachometer" aria-hidden="true"></i> Measurements - </h3>
 						</div>
@@ -106,7 +109,7 @@ input[type=number]::-webkit-outer-spin-button {
 							</div>
 						</div>					
 					</div>
-					<div class="row">
+					<div class="row hide">
 							<div class="col-md-12">
 								<h3><i class="fa fa-user" aria-hidden="true"></i> Other - </h3>
 							</div>						
@@ -156,7 +159,7 @@ input[type=number]::-webkit-outer-spin-button {
 								 <label for="age2">No</label>
 							</div>						
 					</div>
-					<div class="row" >
+					<div class="row hide" >
 						<div class="col-md-12 file-upload-main" style="display: flex; justify-content:start; align-items-center; flex-wrap: wrap;">
 							<div class="">
 								<h3><i class="fa fa-user" aria-hidden="true"></i> File Upload - </h3>
@@ -344,7 +347,7 @@ input[type=number]::-webkit-outer-spin-button {
 						<input type="text" pattern="[0-9]+" class="form-control" name="advance_amount" id="advance_amount">
 					</div>
 					<div class="form-group">
-						<label for="advance_method">Advance Method</label>
+						<label for="advance_method">Advance Payment Method</label>
 						<select class="form-control" name="advance_method" id="advance_method">
 							<option value="Cash">Cash</option>
 							<option value="QR">QR</option>

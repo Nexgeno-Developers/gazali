@@ -98,6 +98,29 @@ switch ($action) {
         elseif($config['i_driver'] == 'v2'){
             $js_file = 'invoice_add_v2';
             $tpl_file = 'add_invoice_v2.tpl';
+            $extra_jq .= '
+$(document).ready(function () {
+    var applyProductTypeDefault = function () {
+        var $cloth = $(\'#cloth_id\');
+        if (!$cloth.length) {
+            return;
+        }
+
+        var $fragrancesOption = $cloth.find(\'option\').filter(function () {
+            return $.trim($(this).text()).toLowerCase() === \'fragrances\';
+        }).first();
+
+        if ($fragrancesOption.length) {
+            $cloth.val($fragrancesOption.val()).trigger(\'change\');
+        }
+
+        $cloth.closest(\'.col-md-3\').hide();
+    };
+
+    applyProductTypeDefault();
+    setTimeout(applyProductTypeDefault, 300);
+});
+';
         }
         else{
             $js_file = 'invoice';
@@ -169,7 +192,7 @@ switch ($action) {
             $a = ORM::for_table('crm_accounts')->find_one($d['userid']);
             $ui->assign('a', $a);
             $ui->assign('d', $d);
-            $ui->assign('_st', $_L['Add Invoice']);
+            $ui->assign('_st', 'Edit Invoice');
             // $c = ORM::for_table('crm_accounts')->select('id')->select('account')->select('company')->select('phone')->select('email')->where('gid', 1)->order_by_desc('id')->find_many();
             // $ui->assign('c', $c);
             $current_c = ORM::for_table('crm_accounts')
@@ -192,6 +215,7 @@ switch ($action) {
             $ui->assign('taxes', $taxes); 
 
             $ui->assign('idate', date('Y-m-d'));
+            $extra_jq = '';
 
             if($config['i_driver'] == 'default'){
                 $js_file = 'edit-invoice-v2';
@@ -200,6 +224,29 @@ switch ($action) {
             elseif($config['i_driver'] == 'v2'){
                 $js_file = 'edit_invoice_v2n';
                 $tpl_file = 'edit_invoice_v2.tpl';
+                $extra_jq = '
+$(document).ready(function () {
+    var applyProductTypeDefault = function () {
+        var $cloth = $(\'#cloth_id\');
+        if (!$cloth.length) {
+            return;
+        }
+
+        var $fragrancesOption = $cloth.find(\'option\').filter(function () {
+            return $.trim($(this).text()).toLowerCase() === \'fragrances\';
+        }).first();
+
+        if ($fragrancesOption.length) {
+            $cloth.val($fragrancesOption.val()).trigger(\'change\');
+        }
+
+        $cloth.closest(\'.col-md-3\').hide();
+    };
+
+    applyProductTypeDefault();
+    setTimeout(applyProductTypeDefault, 300);
+});
+';
             }
             else{
                 $js_file = 'edit-invoice-v2';
@@ -220,7 +267,8 @@ switch ($action) {
 								aDec: \''.$config['dec_point'].'\',
 								aSep: \''.$config['thousands_sep'].'\'
 								});
-							');
+							'.
+                $extra_jq);
 
             $ui->display($tpl_file);
 
@@ -4634,37 +4682,6 @@ $(".cdelete").click(function (e) {
 
         $design_img = json_decode($design['image'], true)[0]; 
         $design_image = $design_img ? '<a target="_blank" href="'.$design_img.'"><img width="50px" height="50px" src="'.$design_img.'"></a>' : '-';
-        
-        $items .= 
-        '
-        <tr>
-            <td class="number">
-                '.$design_image.'
-                <input type="hidden" class="form-control sid" name="s_id[]" value="0" id="s_id">
-                <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$design['id'].'" id="p_id">
-                <input type="hidden" name="pimg[]" value="'.$design_img.'">
-            </td>
-            <td>
-                <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - Silai" id="i_'.$last_row.'" required="">
-            </td>
-            <td>
-                <input type="text" class="form-control qty" value="1" name="qty[]">
-            </td>
-            <td>
-                <input type="text" class="form-control item_price" name="amount[]" value="'.$design['price'].'">
-            </td>
-            <td class="ltotal">
-                <input type="number" class="form-control lvtotal" name="total[]" value="'.$design['price'].'" readonly="" required="">
-            </td>
-            <td>
-            <input type="hidden" name="item_type[]" value="design">
-        </td>             
-            <td class="delete">
-                <i class="fa fa-trash tr-remove"></i>
-            </td>
-        </tr>            
-        ';     
-        $last_row++;   
 
         echo $items;
 
@@ -4760,34 +4777,6 @@ $(".cdelete").click(function (e) {
 
         $design_img = json_decode($design['image'], true)[0]; 
         $design_image = $design_img ? '<a target="_blank" href="'.$design_img.'"><img width="50px" height="50px" src="'.$design_img.'"></a>' : '-';
-        
-        $items .= 
-        '
-        <tr>
-            <td class="number">
-                '.$design_image.'
-                <input type="hidden" class="form-control sid" name="s_id[]" value="0" id="s_id">
-                <input type="hidden" class="form-control item_id" name="p_id[]" value="'.$design['id'].'" id="p_id">
-                <input type="hidden" name="pimg[]" value="'.$design_img.'">
-            </td>
-            <td>
-                <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - Silai" id="i_'.$last_row.'" required="">
-            </td>
-            <td>
-                <input type="text" class="form-control qty" value="1" name="qty[]">
-            </td>
-            <td>
-                <input type="text" class="form-control item_price" name="amount[]" value="'.$design['price'].'">
-            </td>
-            <td class="ltotal">
-                <input type="number" class="form-control lvtotal" name="total[]" value="'.$design['price'].'" readonly="" required="">
-            </td>
-            <td class="hide">
-            <input type="hidden" name="item_type[]" value="design">
-        </td>             
-        </tr>            
-        ';     
-        $last_row++;   
 
         echo $items;
 

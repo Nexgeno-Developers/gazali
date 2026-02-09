@@ -595,7 +595,7 @@ $(document).ready(function () {
 		}
 		else
 		{
-            alert('please select design first');
+            alert('please select Gift Box first');
 		}
 		
 	});	
