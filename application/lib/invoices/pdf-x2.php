@@ -209,14 +209,20 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 							<?php echo $comp['account']; ?>
 						</strong>
 						<br>
-						<?php echo $comp['address']; ?>
-						<br>
-						<strong>Phone : </strong>
-						<?php echo $comp['contact_phone']; ?>
-						<br>
-						<strong>Email : </strong>
-						<?php echo $comp['email']; ?>
-						<br>
+						<?php if (!empty($comp['address'])) { ?>
+							<?php echo $comp['address']; ?>
+							<br>
+						<?php } ?>
+						<?php if (!empty($comp['contact_phone'])) { ?>
+							<strong>Phone : </strong>
+							<?php echo $comp['contact_phone']; ?>
+							<br>
+						<?php } ?>
+						<?php if (!empty($comp['email'])) { ?>
+							<strong>Email : </strong>
+							<?php echo $comp['email']; ?>
+							<br>
+						<?php } ?>
 						<?/* <strong>GSTIN : </strong>
 						<?php echo $comp['gstin']; ?>
 						<br>
@@ -225,19 +231,27 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 						<?php echo $comp['pan']; ?> 
 						<br>						
 						<?php } ?>*/?>
-						<strong>Account Name : </strong>
-						<?php //echo get_type_by_id('sys_accounts', 'id', $d['company_id'], 'account'); ?>
-                        <?php
-                            $accountt = get_type_by_id('sys_accounts', 'id', $d['company_id'], 'account');
-                            $parts = explode('-', $accountt);
-                            echo isset($parts[1]) ? trim($parts[0]) : $accountt;
-                        ?>						
-						<br>
-						<strong>Account No : </strong>
-						<?php echo get_type_by_id('sys_accounts', 'id', $d['company_id'], 'account_number'); ?>
-						<br>
-						<strong>IFSC Code : </strong>
-						<?php echo get_type_by_id('sys_accounts', 'id', $d['company_id'], 'ifsc'); ?>
+						<?php
+							$accountt = get_type_by_id('sys_accounts', 'id', $d['company_id'], 'account');
+							$parts = explode('-', $accountt);
+							$account_name = isset($parts[1]) ? trim($parts[0]) : $accountt;
+							$account_no = get_type_by_id('sys_accounts', 'id', $d['company_id'], 'account_number');
+							$ifsc_code = get_type_by_id('sys_accounts', 'id', $d['company_id'], 'ifsc');
+						?>
+						<?php if (!empty($account_name)) { ?>
+							<strong>Account Name : </strong>
+							<?php echo $account_name; ?>
+							<br>
+						<?php } ?>
+						<?php if (!empty($account_no)) { ?>
+							<strong>Account No : </strong>
+							<?php echo $account_no; ?>
+							<br>
+						<?php } ?>
+						<?php if (!empty($ifsc_code)) { ?>
+							<strong>IFSC Code : </strong>
+							<?php echo $ifsc_code; ?>
+						<?php } ?>
 					</div>
 				</td>
 				<td rowspan="5" width="62%" style="border: 0;line-height:1.5em;  text-align: right; font-size:12px;">
@@ -278,7 +292,10 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 									echo '<strong>Email:</strong> '. $a['email']. ' <br>';
 							}
 							foreach ($cf as $cfs){
-									echo $cfs['fieldname'].': '. get_custom_field_value($cfs['id'],$a['id']). ' <br>';
+								$cf_val = get_custom_field_value($cfs['id'],$a['id']);
+								if (trim((string)$cf_val) !== '') {
+									echo $cfs['fieldname'].': '. $cf_val. ' <br>';
+								}
 							}
 							?>
 					<!--<strong>
@@ -296,26 +313,6 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 			</tr>
 		</table>
 		<hr>
-		<?php/* if($d['d_measure'] == 'yes'){ ?>
-        <p style="margin:0px;"><b>Measurements </b></p>
-		<div class="table-responsive" id="customer">
-			<table class="table" id="items">
-				<tr>
-				    <?php foreach (json_decode($a['measurements']) as $key => $val){ ?>
-    					<th id="cell-item" class="text-center text-semibold"><?php echo ucfirst($key); ?></th>
-					<?php } ?>
-				</tr>
-				<tr>
-					
-				    <?php foreach (json_decode($a['measurements']) as $key => $val){ ?>
-					<td align="center"><?php echo $val; ?></td>
-					<?php } ?>					
-				</tr>
-
-			</table>
-
-		</div>
-		<?php } */?>
 
 		<div class="table-responsive" id="customer">
 			<table class="table" id="items">
@@ -342,7 +339,7 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 
 		</div>
          <br>
-		<?php if($d['d_measure'] == 'yes'){ ?>
+		<?php if(false && $d['d_measure'] == 'yes'){ ?>
         <p style="margin:0px;"><b>Measurements </b></p>
 		<div class="table-responsive" id="customer">
 			<table class="table" id="items">
@@ -368,7 +365,7 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 			<table class="table" id="items" width="100%">
 				<tr>
 					<th id="cell-item" class="text-semibold" width="10%">S.NO</th>
-					<th id="cell-item" class="text-semibold" width="50%">
+					<th id="cell-item" class="text-semibold" width="35%">
 						<?php echo $_L['Description'];?>
 					</th>
 					
@@ -376,7 +373,7 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 						Gift Box
 					</th>
 
-					<!--<th id="cell-qty" class="text-center text-semibold" width="10%">
+					<th id="cell-qty" class="text-center text-semibold" width="10%">
 						<?php echo $_L['Qty'];?>
 					</th>
 					<th id="cell-price" class="text-center text-semibold">
@@ -384,8 +381,8 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 					</th>
 
 					<th id="cell-total" class="text-center text-semibold">
-						<?php echo $_L['Total'];?>
-					</th>-->
+						Total Price
+					</th>
 				</tr>
 
 				<?php  $i=0; 
@@ -405,8 +402,14 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 							<img width="50px" height="50px" src="/ui/lib/imgs/invoice-contents/<?= $item['item_img']; ?>">
 						<?php } ?>						
 					</td>
-					<!--<td align="center" style="border-bottom:1px solid #ccc;">
-						<?= $item['qty']; ?>
+					<td align="center" style="border-bottom:1px solid #ccc;">
+						<?php
+							$unit = 'gram';
+							if (isset($item['unit']) && strtolower(trim((string)$item['unit'])) === 'tola') {
+								$unit = 'tola';
+							}
+						?>
+						<?= $item['qty']; ?> <?= $unit; ?>
 					</td>
 					<td align="center">
 						<?= $item['amount']; ?>
@@ -415,7 +418,7 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 						<span class="price">
 							<?= number_format($item['qty']*$item['amount'],2,".",""); ?>
 						</span>
-					</td>-->
+					</td>
 				</tr>
 				<?php 
 					} ?>
@@ -424,9 +427,9 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 					<td>&nbsp;</td>
 					<td></td>
 					<td></td>
-					<!--<td></td>
 					<td></td>
-					<td></td>-->
+					<td></td>
+					<td></td>
 				</tr>
 
 			</table>

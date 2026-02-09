@@ -401,10 +401,20 @@ $(document).ready(function () {
            
 			$ui->assign('emls', $emls);
             $ui->assign('emls_c', $emls_c);
-			$ui->assign('trs', $trs);
+            $ui->assign('trs', $trs);
             $ui->assign('trs_c', $trs_c);
             $ui->assign('a', $a);
             $ui->assign('d', $d);
+            $sales_person_name = '-';
+            if (!empty($d['created_by'])) {
+                $sales_person = ORM::for_table('sys_users')
+                    ->select('fullname')
+                    ->find_one((int) $d['created_by']);
+                if ($sales_person && !empty($sales_person['fullname'])) {
+                    $sales_person_name = $sales_person['fullname'];
+                }
+            }
+            $ui->assign('sales_person_name', $sales_person_name);
 
             $i_credit = $d['credit'];
             $i_due = '0.00';
@@ -684,12 +694,9 @@ $(document).ready(function () {
             // Start transaction Lock the table to prevent race conditions
             ORM::get_db()->beginTransaction();
             ORM::get_db()->exec("LOCK TABLES sys_invoices WRITE");
-            $inv_no = ORM::for_table('sys_invoices')->max('invoice_no');
-			$inv_no = $inv_no+1;
-		    if($company == 1){
-				$inv_prefix = 'ME';
-			}
-			$invoicenum = $inv_prefix.$inv_no;
+            $inv_no = ORM::for_table('sys_invoices')->where('company_id', $company)->max('invoice_no');
+			$inv_no = (int) $inv_no + 1;
+			$invoicenum = format_branch_invoice_number($inv_no, $company);
             ORM::get_db()->exec("UNLOCK TABLES");
             ORM::get_db()->commit();
             
@@ -740,6 +747,14 @@ $(document).ready(function () {
 								$d->description = $_POST['desc'][$i];
 								$d->qty = Finance::amount_fix($_POST['qty'][$i]);
 								$d->amount = Finance::amount_fix($_POST['amount'][$i]);
+								$unit = 'gram';
+								if (isset($_POST['unit'][$i])) {
+									$posted_unit = strtolower(trim($_POST['unit'][$i]));
+									if ($posted_unit === 'tola') {
+										$unit = 'tola';
+									}
+								}
+								$d->unit = $unit;
 								//get tax rate by id
 								$ptaxrate = ORM::for_table('sys_tax')->find_one($_POST['taxed']);
 								//var_dump($ptaxrate['rate']);
@@ -778,15 +793,15 @@ $(document).ready(function () {
             // Start transaction Lock the table to prevent race conditions
             ORM::get_db()->beginTransaction();
             ORM::get_db()->exec("LOCK TABLES sys_invoices WRITE");
-            $inv_no = ORM::for_table('sys_invoices')->max('invoice_no');
-			$inv_no = $inv_no+1;
+            $inv_no = ORM::for_table('sys_invoices')->where('company_id', $prod['company_id'])->max('invoice_no');
+			$inv_no = (int) $inv_no + 1;
             ORM::get_db()->exec("UNLOCK TABLES");
             ORM::get_db()->commit();
             
 			$prod->invoice_status = 1;
 			$prod->save(); 
 				 
-			$invoicenum = 'MI'.$inv_no; 	
+			$invoicenum = format_branch_invoice_number($inv_no, $prod['company_id']);
 			$datetime = date("Y-m-d H:i:s");
 					
 			//save to sys_invoices
@@ -838,6 +853,7 @@ $(document).ready(function () {
 				$d->description = $performa['description'];
 				$d->qty = $performa['qty'];
 				$d->amount = $performa['amount'];
+				$d->unit = (isset($performa['unit']) && strtolower($performa['unit']) === 'tola') ? 'tola' : 'gram';
 				$d->taxrate = $performa['taxrate'];
 				$d->tax_id = $performa['tax_id'];
 				$d->taxamount = $performa['taxamount'];
@@ -883,11 +899,24 @@ $(document).ready(function () {
 
         break;
 				
-		case 'add-performa-post':
+    case 'add-performa-post':
         Event::trigger('invoices/add-performa-post/');
         $cid = _post('cid');
         $company = _post('company');
         $company_branch_id = _post('company_branch_id');
+        $sales_person_id = (int) _post('sales_person');
+        if ($sales_person_id <= 0) {
+            $sales_person_id = (int) $user['id'];
+        }
+
+        $sales_person_q = ORM::for_table('sys_users')->select('id')->where('id', $sales_person_id);
+        if ((int) $user->roleid !== 0) {
+            $sales_person_q->where('branch_id', $user->branch_id);
+        }
+        $sales_person = $sales_person_q->find_one();
+        if (!$sales_person) {
+            $sales_person_id = (int) $user['id'];
+        }
 				
         
         $msg = '';
@@ -1119,11 +1148,9 @@ $(document).ready(function () {
                     $db->beginTransaction();
                 }
 
-                $inv_no = ORM::for_table('sys_invoices')->max('invoice_no');
+                $inv_no = ORM::for_table('sys_invoices')->where('company_id', $company)->max('invoice_no');
                 $inv_no = (int)$inv_no + 1;
-
-                $inv_prefix = ($company == 1) ? 'PME' : 'AB';
-                $invoicenum = $inv_prefix . $inv_no;
+                $invoicenum = format_branch_invoice_number($inv_no, $company);
 
                 if ($db->inTransaction()) {
                     $db->commit();
@@ -1228,6 +1255,14 @@ $(document).ready(function () {
 								$d->description = $_POST['desc'][$i];
 								$d->qty = Finance::amount_fix($_POST['qty'][$i]);
 								$d->amount = Finance::amount_fix($_POST['amount'][$i]);
+								$unit = 'gram';
+								if (isset($_POST['unit'][$i])) {
+									$posted_unit = strtolower(trim($_POST['unit'][$i]));
+									if ($posted_unit === 'tola') {
+										$unit = 'tola';
+									}
+								}
+								$d->unit = $unit;
 								//get tax rate by id
 								$ptaxrate = ORM::for_table('sys_tax')->find_one($_POST['taxed']);
 								//var_dump($ptaxrate['rate']);
@@ -2339,6 +2374,14 @@ $inv_prefix = '';
 									$d->description = $_POST['desc'][$i];
 									$d->qty = Finance::amount_fix($_POST['qty'][$i]);
 									$d->amount = Finance::amount_fix($_POST['amount'][$i]);
+									$unit = 'gram';
+									if (isset($_POST['unit'][$i])) {
+										$posted_unit = strtolower(trim($_POST['unit'][$i]));
+										if ($posted_unit === 'tola') {
+											$unit = 'tola';
+										}
+									}
+									$d->unit = $unit;
 									//get tax rate by id
 									$ptaxrate = ORM::for_table('sys_tax')->find_one($_POST['taxed']);
 									$d->taxrate = Finance::amount_fix($ptaxrate['rate']);
@@ -4566,6 +4609,11 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="1" name="qty[]">
                     </td>
                     <td>
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="gram" checked> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="tola"> Tola</label>
+                        <input type="hidden" class="unit-value" name="unit[]" value="gram">
+                    </td>
+                    <td>
                         <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
                     </td>
                     <td class="ltotal">
@@ -4612,6 +4660,11 @@ $(".cdelete").click(function (e) {
                     </td>
                     <td>
                         <input type="text" class="form-control qty" value="1" name="qty[]">
+                    </td>
+                    <td>
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="gram" checked> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="tola"> Tola</label>
+                        <input type="hidden" class="unit-value" name="unit[]" value="gram">
                     </td>
                     <td>
                         <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
@@ -4702,10 +4755,15 @@ $(".cdelete").click(function (e) {
                         <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
                     </td>
                     <td>
-                        <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
+                        <input type="text" class="form-control item_name" name="desc[]" value="'.$product['name'].'" id="i_'.$last_row.'" required="">
                     </td>
                     <td>
                         <input type="text" class="form-control qty" value="'.$compQty.'" name="qty[]">
+                    </td>
+                    <td>
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="gram" checked> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="tola"> Tola</label>
+                        <input type="hidden" class="unit-value" name="unit[]" value="gram">
                     </td>
                     <td>
                         <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
@@ -4803,10 +4861,15 @@ $(".cdelete").click(function (e) {
                         <input type="hidden" name="pimg[]" value="'.$product['product_image'].'">
                     </td>
                     <td>
-                        <input type="text" class="form-control item_name" name="desc[]" value="('.$cloth['name'].' / '.$design['name'].') - '.$product['name'].'" id="i_'.$last_row.'" required="">
+                        <input type="text" class="form-control item_name" name="desc[]" value="'.$product['name'].'" id="i_'.$last_row.'" required="">
                     </td>
                     <td>
                         <input type="text" class="form-control qty" value="'.$compQty.'" name="qty[]">
+                    </td>
+                    <td>
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="gram" checked> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="tola"> Tola</label>
+                        <input type="hidden" class="unit-value" name="unit[]" value="gram">
                     </td>
                     <td>
                         <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">

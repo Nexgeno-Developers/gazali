@@ -1,4 +1,11 @@
 {include file="sections/header.tpl"}
+<style>
+	#delivery_status2,
+	.tailor-pdf-wrap,
+	.invoice-extra-hidden {
+		display: none !important;
+	}
+</style>
 <div class="row">
 	<div class="col-lg-12">
 		<div class="form-group">
@@ -70,7 +77,7 @@
 					{if $d['status'] eq 'Unpaid'}
 					<a href="{$_url}invoices/edit/{$d['id']}" class="btn btn-warning  btn-sm"><i class="fa fa-pencil"></i> {$_L['Edit']}</a>
 					{/if}
-					<div class="btn-group" role="group">
+					<div class="btn-group tailor-pdf-wrap" role="group">
 						<button type="button" class="btn  btn-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false" style="margin-right: 4px;"><i class="fa fa-file-pdf-o"></i>
 							Tailor PDF
 								<span class="caret"></span>
@@ -124,6 +131,7 @@
 											{/if}-->
 
 											<strong>Customer Name:</strong> {$d['account']} <br>
+											<strong>Sales Person:</strong> {$sales_person_name} <br>
 
 											<strong>Address:</strong> {$a['address']} <br>
 											<!--{$a['city']} <br>
@@ -164,7 +172,7 @@
 						</div>
 					</header>
 					{if $d['d_measure'] eq 'yes'}
-					<div class="invoice_tb">			<h3>Measurements :</h3>
+					<div class="invoice_tb invoice-extra-hidden">			<h3>Measurements :</h3>
 											
 											
 <table class="table">

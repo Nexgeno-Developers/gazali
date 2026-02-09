@@ -212,8 +212,9 @@ input[type=number]::-webkit-outer-spin-button {
 							<thead>
 								<tr>
 									<th width="15%">Item Image</th>
-									<th width="40%">{$_L['Item Name']}</th>
+									<th width="32%">{$_L['Item Name']}</th>
 									<th width="10%">{$_L['Qty']}</th>
+									<th width="13%">Unit</th>
 									<th width="15%">{$_L['Price']}</th>
 									<th width="15%">{$_L['Total']}</th>
 								</tr>

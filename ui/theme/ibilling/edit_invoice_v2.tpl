@@ -204,8 +204,9 @@ input[type=number]::-webkit-outer-spin-button {
 							<thead>
 								<tr>
 									<th width="5%">Item Image</th>
-									<th width="40%">{$_L['Item Name']}</th>
+									<th width="32%">{$_L['Item Name']}</th>
 									<th width="10%">{$_L['Qty']}</th>
+									<th width="13%">Unit</th>
 									<th width="15%">{$_L['Price']}</th>
 									<th width="15%">{$_L['Total']}</th>
 								</tr>
@@ -230,7 +231,16 @@ input[type=number]::-webkit-outer-spin-button {
 										
                                     </td>
 										<td><input type="text" class="form-control items" id="i_{$idi++}" name="desc[]" value="{$item['description']}" /> </td>
-										<td><input type="number" class="form-control qty" value="{if ($_c['dec_point']) eq ','}{$item['qty']|replace:'.':','}{else}{$item['qty']}{/if}" name="qty[]"></td> 
+										<td><input type="number" class="form-control qty" value="{if ($_c['dec_point']) eq ','}{$item['qty']|replace:'.':','}{else}{$item['qty']}{/if}" name="qty[]"></td>
+										<td>
+											<label style="margin-right:8px;">
+												<input type="radio" class="unit-radio" name="unit_radio_{$item['id']}" value="gram" {if !isset($item['unit']) || $item['unit'] eq '' || $item['unit'] eq 'gram'}checked{/if}> Gram
+											</label>
+											<label>
+												<input type="radio" class="unit-radio" name="unit_radio_{$item['id']}" value="tola" {if isset($item['unit']) && $item['unit'] eq 'tola'}checked{/if}> Tola
+											</label>
+											<input type="hidden" class="unit-value" name="unit[]" value="{if isset($item['unit']) && $item['unit'] neq ''}{$item['unit']}{else}gram{/if}">
+										</td>
 										<td><input type="number" class="form-control item_price" name="amount[]" value="{if ($_c['dec_point']) eq ','}{$item['amount']|replace:'.':','}{else}{$item['amount']}{/if}"></td> 
 										<td class="ltotal"><input type="number" class="form-control lvtotal" readonly="" name="total[]" value="{if ($_c['dec_point']) eq ','}{{$item['amount']*$item['qty']}|replace:'.':','}{else}{{$item['amount']*$item['qty']}}{/if}"></td>
 										<td class="hide">

@@ -1508,3 +1508,52 @@ if (!function_exists('grams_to_tola')) {
         return $grams / 11.66;
     }
 }
+
+function is_branch_invoice_prefix_enabled()
+{
+    $flag = get_option('invoice_branch_prefix_enabled');
+    return ((string) $flag === '1');
+}
+
+function get_branch_invoice_prefix_map()
+{
+    $raw = get_option('invoice_branch_prefix_map');
+    if (!$raw) {
+        return array();
+    }
+
+    $map = json_decode($raw, true);
+    if (!is_array($map)) {
+        return array();
+    }
+
+    return $map;
+}
+
+function get_branch_invoice_prefix($branch_id)
+{
+    $map = get_branch_invoice_prefix_map();
+    $key = (string) $branch_id;
+    if (!isset($map[$key])) {
+        return '';
+    }
+
+    return trim((string) $map[$key]);
+}
+
+function format_branch_invoice_number($invoice_no, $branch_id)
+{
+    $invoice_no = (int) $invoice_no;
+    $serial = sprintf('%04d', $invoice_no);
+
+    if (!is_branch_invoice_prefix_enabled()) {
+        return $serial;
+    }
+
+    $prefix = get_branch_invoice_prefix($branch_id);
+    if ($prefix === '') {
+        return $serial;
+    }
+
+    return $prefix . $serial;
+}
