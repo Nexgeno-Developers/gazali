@@ -4687,8 +4687,8 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="1" name="qty[]">
                     </td>
                     <td>
-                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="gram" checked> Gram</label>
-                        <label><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="tola"> Tola</label>
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" checked> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola"> Tola</label>
                         <input type="hidden" class="unit-value" name="unit[]" value="gram">
                     </td>
                     <td>
@@ -4740,8 +4740,8 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="1" name="qty[]">
                     </td>
                     <td>
-                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="gram" checked> Gram</label>
-                        <label><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="tola"> Tola</label>
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" checked> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola"> Tola</label>
                         <input type="hidden" class="unit-value" name="unit[]" value="gram">
                     </td>
                     <td>
@@ -4839,8 +4839,8 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="'.$compQty.'" name="qty[]">
                     </td>
                     <td>
-                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="gram" checked> Gram</label>
-                        <label><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="tola"> Tola</label>
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" checked> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola"> Tola</label>
                         <input type="hidden" class="unit-value" name="unit[]" value="gram">
                     </td>
                     <td>
@@ -4945,8 +4945,8 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="'.$compQty.'" name="qty[]">
                     </td>
                     <td>
-                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="gram" checked> Gram</label>
-                        <label><input type="radio" class="unit-radio" name="unit_radio_'.$last_row.'" value="tola"> Tola</label>
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" checked> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola"> Tola</label>
                         <input type="hidden" class="unit-value" name="unit[]" value="gram">
                     </td>
                     <td>
