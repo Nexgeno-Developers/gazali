@@ -26,7 +26,7 @@
     <div class="form-group">
         <label class="col-sm-2 control-label">Branch</label>
         <div class="col-sm-10">
-            <select name="branch_id" class="form-control select2">
+            <select name="branch_id" class="form-control" disabled>
                 {if $user->roleid eq 0}
                     {foreach $branches as $branch}
                         <option value="{$branch.id}" {if $branch.id == $d.branch_id}selected{/if}>{$branch.alias|default:$branch.account}</option>
@@ -39,9 +39,9 @@
                     {/foreach}
                 {/if}
             </select>
-            {if $user->roleid neq 0}
+            {*if $user->roleid neq 0*}
                 <input type="hidden" name="branch_id" value="{$d.branch_id}">
-            {/if}
+            {*/if*}
         </div>
     </div>
 
@@ -85,7 +85,7 @@
               {$saved = $components[$cat.value]}
           {/if}
 
-          <div class="component-block" data-cat="{$cat.value}">
+          <div class="component-block" data-cat="{$cat.value|escape}" data-label="{$cat.name|escape}">
 
               {$x = 0}
 
@@ -166,6 +166,41 @@
 
 {literal}
 <script>
+function validateGiftBoxComponents($scope){
+    var hasAtLeastOne = false;
+    var message = '';
+
+    $scope.find('.component-fields').each(function(){
+        var selectedProduct = $.trim($(this).find('select').val() || '');
+        var qtyRaw = $.trim($(this).find('input[name^="component_qty"]').val() || '');
+
+        if(selectedProduct !== ''){
+            var qty = parseFloat(qtyRaw);
+            if(qtyRaw === '' || isNaN(qty) || qty <= 0){
+                message = 'If a product is selected, enter its valid Qty.';
+                return false;
+            }
+            hasAtLeastOne = true;
+        }
+    });
+
+    if(message !== ''){
+        return { valid: false, message: message };
+    }
+
+    if(!hasAtLeastOne){
+        return { valid: false, message: 'Select at least one product and enter its Qty.' };
+    }
+
+    return { valid: true, message: '' };
+}
+
+function showEditValidationError(message){
+    var $form = $('#edit_form');
+    $form.find('.js-edit-component-error').remove();
+    $form.prepend('<div class="alert alert-danger js-edit-component-error">' + message + '</div>');
+}
+
 function addComponent(cat){
     var $block = $('.component-block[data-cat="'+cat+'"]');
     var $row = $block.find('.component-fields').last().clone();
@@ -194,5 +229,23 @@ function addComponent(cat){
 function removeComponent(el){
     $(el).closest('.component-fields').remove();
 }
+
+$(document).ready(function(){
+    if($.fn.select2){
+        $('#edit_form .select2').select2({ dropdownParent: $('#ajax-modal') });
+    }
+
+    $('#update').on('click', function(e){
+        var validation = validateGiftBoxComponents($('#edit_form'));
+        if(!validation.valid){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            showEditValidationError(validation.message);
+            return false;
+        }
+        $('#edit_form').find('.js-edit-component-error').remove();
+        return true;
+    });
+});
 </script>
 {/literal}

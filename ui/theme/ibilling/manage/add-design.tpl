@@ -69,7 +69,7 @@
             <div class="form-group">
               <label class="col-lg-2 control-label">{$cat.name}</label>
               <div class="col-lg-10">
-                <div class="component-block" data-cat="{$cat.value|escape}">
+                <div class="component-block" data-cat="{$cat.value|escape}" data-label="{$cat.name|escape}">
                   <div class="component-fields">
                     <div class="row">
                       <div class="col-md-5">
@@ -82,7 +82,7 @@
                           {/if}
                         </select>
                       </div>
-                      <div class="col-md-5"><input type="number" class="form-control" name="component_qty[{$cat.value}][]" placeholder="Enter Qty" required></div>
+                      <div class="col-md-5"><input type="number" class="form-control" name="component_qty[{$cat.value}][]" placeholder="Enter Qty"></div>
                       <div class="col-md-2 change"><div class="btn btn-block btn-warning bg_greens" onclick="addComponent('{$cat.value|escape}');"><i class="fa fa-plus" aria-hidden="true"></i></div></div>
                     </div>
                   </div>
@@ -105,12 +105,112 @@
 {include file="sections/footer.tpl"}
 {literal}
 <script>
+function escapeHtml(str){
+  return $('<div/>').text(str || '').html();
+}
+
+function validateGiftBoxComponents($scope){
+  var hasAtLeastOne = false;
+  var message = '';
+
+  $scope.find('.component-fields').each(function(){
+    var selectedProduct = $.trim($(this).find('select').val() || '');
+    var qtyRaw = $.trim($(this).find('input[name^="component_qty"]').val() || '');
+
+    if(selectedProduct !== ''){
+      var qty = parseFloat(qtyRaw);
+      if(qtyRaw === '' || isNaN(qty) || qty <= 0){
+        message = 'If a product is selected, enter its valid Qty.';
+        return false;
+      }
+      hasAtLeastOne = true;
+    }
+  });
+
+  if(message !== ''){
+    return { valid: false, message: message };
+  }
+
+  if(!hasAtLeastOne){
+    return { valid: false, message: 'Select at least one product and enter its Qty.' };
+  }
+
+  return { valid: true, message: '' };
+}
+
+function rebuildCategorySelects(categoryData){
+  $('.component-block').each(function(){
+    var $block = $(this);
+    var cat = String($block.data('cat') || '');
+    var label = String($block.data('label') || cat || 'Item');
+    var items = (categoryData && categoryData[cat]) ? categoryData[cat] : [];
+    var options = '<option value="">--Select ' + escapeHtml(label) + '--</option>';
+
+    $.each(items, function(_, item){
+      options += '<option value="' + item.id + '">' + escapeHtml(item.name) + '</option>';
+    });
+
+    $block.find('select').each(function(){
+      var $select = $(this);
+      if($select.data('select2')){
+        $select.select2('destroy');
+      }
+      $select.html(options).val('');
+      $select.select2();
+    });
+
+    // Clear qtys when branch changes to avoid mixed-branch entries.
+    $block.find('input[name^="component_qty"]').val('');
+  });
+}
+
+function loadBranchProducts(branchId){
+  var _url = $("#_url").val();
+  if(!branchId){
+    rebuildCategorySelects({});
+    return;
+  }
+
+  $.ajax({
+    url: _url + 'manage/branch-category-items/',
+    type: 'GET',
+    dataType: 'json',
+    data: { branch_id: branchId },
+    success: function(resp){
+      if(resp && resp.success){
+        rebuildCategorySelects(resp.categories || {});
+      } else {
+        rebuildCategorySelects({});
+      }
+    },
+    error: function(){
+      rebuildCategorySelects({});
+    }
+  });
+}
+
 $(document).ready(function () {
     $(".progress").hide();
     $("#emsg").hide();
+    $('.select2').select2();
+
+    $('#branch_id').on('change', function(){
+      loadBranchProducts($(this).val());
+    });
+
+    loadBranchProducts($('#branch_id').val());
+
     $("#submit").click(function (event) {
-        $('#ibox_form').block({ message: null });
         event.preventDefault(); 
+        var validation = validateGiftBoxComponents($('#rform'));
+        if(!validation.valid){
+            $("#emsgbody").html(validation.message);
+            $("#emsg").show("slow");
+            return false;
+        }
+        $("#emsg").hide();
+
+        $('#ibox_form').block({ message: null });
         var formData = new FormData($('#rform')[0]);
         var _url = $("#_url").val();
         $.ajax({
@@ -176,9 +276,5 @@ function removeComponent(el){
   $fields.remove();
 }
 
-// Initialize select2 on page load
-$(document).ready(function(){
-  $('.select2').select2();
-});
 </script>
 {/literal}

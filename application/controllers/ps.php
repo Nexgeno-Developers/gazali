@@ -202,7 +202,10 @@ switch ($action) {
             break;
         }
         $name = _post('name');
-        // $sales_price = Finance::amount_fix(_post('sales_price'));
+        $sales_price = Finance::amount_fix(_post('sales_price'));
+        if ($sales_price === '') {
+            $sales_price = 0;
+        }
         $item_number = _post('item_number');
         $description = _post('description');
         $product_type = _post('product_type');
@@ -249,7 +252,7 @@ switch ($action) {
             $d = ORM::for_table('sys_items')->create();
             $d->branch_id = $branch_id;
             $d->name = $name;
-            // $d->sales_price = $sales_price;
+            $d->sales_price = $sales_price;
             $d->item_number = $item_number;
             $d->description = $description;
             $d->added = date('Y-m-d');

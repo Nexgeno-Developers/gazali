@@ -29,10 +29,17 @@ switch ($action) {
         // Dynamic categories and their items
         $categories = ORM::for_table('sys_items_category')->find_array();
         $category_items = [];
+        $default_filter_branch = (string) $user->branch_id;
         foreach ($categories as $cat) {
-            $category_items[$cat['value']] = ORM::for_table('sys_items')
-                ->where('product_category', $cat['value'])
-                ->find_array();
+            $items_q = ORM::for_table('sys_items')
+                ->where('type', 'Product')
+                ->where('product_category', $cat['value']);
+
+            if ($default_filter_branch !== '') {
+                $items_q->where('branch_id', $default_filter_branch);
+            }
+
+            $category_items[$cat['value']] = $items_q->find_array();
         }
 
         $ui->assign('categories', $categories);
@@ -68,6 +75,69 @@ switch ($action) {
         $ui->assign('nxt',$nxt);
         $ui->display('manage/add-design.tpl');
     break;        
+
+    case 'branch-category-items':
+        if(!has_access($user->roleid, 'products_n_services')) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'message' => $_L['You do not have permission']]);
+            break;
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        $requested_branch_id = trim((string) _get('branch_id'));
+        if ($user->roleid == 0) {
+            $effective_branch_id = $requested_branch_id;
+        } else {
+            $effective_branch_id = (string) $user->branch_id;
+        }
+
+        if ($effective_branch_id === '' || $effective_branch_id === 'all') {
+            echo json_encode(['success' => true, 'branch_id' => $effective_branch_id, 'categories' => []]);
+            break;
+        }
+
+        $categories = ORM::for_table('sys_items_category')
+            ->select_many('name', 'value')
+            ->find_array();
+
+        $items = ORM::for_table('sys_items')
+            ->select_many('id', 'name', 'product_category')
+            ->where('type', 'Product')
+            ->where('branch_id', $effective_branch_id)
+            ->order_by_asc('name')
+            ->find_array();
+
+        $normalize_category = function ($raw) {
+            $val = strtolower(trim((string) $raw));
+            $val = preg_replace('/\s+/', '_', $val);
+            return $val;
+        };
+
+        $items_by_category = [];
+        foreach ($items as $item) {
+            $key = $normalize_category($item['product_category']);
+            if (!isset($items_by_category[$key])) {
+                $items_by_category[$key] = [];
+            }
+            $items_by_category[$key][] = [
+                'id' => (int) $item['id'],
+                'name' => $item['name']
+            ];
+        }
+
+        $response = [];
+        foreach ($categories as $cat) {
+            $cat_key = $normalize_category($cat['value']);
+            $response[$cat['value']] = isset($items_by_category[$cat_key]) ? $items_by_category[$cat_key] : [];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'branch_id' => $effective_branch_id,
+            'categories' => $response
+        ]);
+        break;
 
 
     case 'add-post':
@@ -483,11 +553,16 @@ switch ($action) {
             $categories = ORM::for_table('sys_items_category')->find_array();
             $category_items = [];
             $components = [];
+            $prefill_branch_id = ($user->roleid == 0) ? (string) $d->branch_id : (string) $user->branch_id;
             foreach ($categories as $cat) {
                 $val = $cat['value'];
-                $category_items[$val] = ORM::for_table('sys_items')
-                    ->where('product_category', $val)
-                    ->find_array();
+                $items_q = ORM::for_table('sys_items')
+                    ->where('type', 'Product')
+                    ->where('product_category', $val);
+                if ($prefill_branch_id !== '') {
+                    $items_q->where('branch_id', $prefill_branch_id);
+                }
+                $category_items[$val] = $items_q->find_array();
                 $components[$val] = json_decode($d[$val], true) ?: [];
             }
             $ui->assign('categories', $categories);
