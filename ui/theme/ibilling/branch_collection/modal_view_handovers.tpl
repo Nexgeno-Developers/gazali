@@ -12,6 +12,7 @@
         <th>Amount</th>
         <th>Type</th>
         <th>Paid By</th>
+        <th>Cash Notes</th>
         <th>Note</th>
         <th>Status</th>
         <th>Action</th>
@@ -25,6 +26,22 @@
           <td>₹{$h.amount_paid}</td>
           <td>{$h.payment_type|default:'-'}</td>
           <td>{$h.paid_by_name}</td>
+          <td>
+            {if $h.payment_type=='Cash' && $h.cash_breakdown}
+                {assign var=cb value=$h.cash_breakdown|@json_decode:true}
+                {if $cb}
+                    {foreach $cb as $den => $cnt}
+                        {if $cnt>0}
+                            <span class="label label-default" style="margin:1px; display:inline-block;">{$den}x{$cnt}</span>
+                        {/if}
+                    {/foreach}
+                {else}
+                    -
+                {/if}
+            {else}
+                -
+            {/if}
+          </td>
           <td>{$h.note|default:'-'}</td>
           <td class="status-cell">{$h.status}</td>
           <td>
@@ -42,7 +59,7 @@
           </td>
         </tr>
       {foreachelse}
-        <tr><td colspan="7" class="text-center">No handovers found.</td></tr>
+        <tr><td colspan="9" class="text-center">No handovers found.</td></tr>
       {/foreach}
     </tbody>
   </table>

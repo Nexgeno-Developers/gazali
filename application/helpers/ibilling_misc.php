@@ -1557,3 +1557,19 @@ function format_branch_invoice_number($invoice_no, $branch_id)
 
     return $prefix . $serial;
 }
+
+/**
+ * Central currency prefix used across the app.
+ * Example output: "QAR " (with trailing space for easy concatenation).
+ * Update here to change currency display globally.
+ */
+function currency_prefix()
+{
+    global $config;
+
+    $code = isset($config['currency_code']) && $config['currency_code'] !== ''
+        ? trim($config['currency_code'])
+        : 'QAR';
+
+    return $code . ' ';
+}

@@ -6,7 +6,9 @@ $ui->assign('_st', 'Collection Management');
 
 $action = $routes[1];
 $user   = User::_info();
+$currency_prefix = currency_prefix();
 $ui->assign('user', $user);
+$ui->assign('currency_prefix', $currency_prefix);
 if(!(has_access($user->roleid, 'collection'))) {
     r2(U."dashboard",'e',$_L['You do not have permission']);
 }
@@ -117,7 +119,7 @@ switch ($action) {
                 $qr_amount = number_format($r['qr_amount'], 2, '.', '');
                 $cash_amount = number_format($r['cash_amount'], 2, '.', '');
                 // Amount cell with small QR/Cash breakdown
-                $amount_display = '₹' . $amount . '<br> <small class="text-muted">(Cash: ₹' . $cash_amount . ' | QR: ₹' . $qr_amount . ')</small>';
+                $amount_display = $currency_prefix . $amount . '<br> <small class="text-muted">(Cash: ' . $currency_prefix . $cash_amount . ' | QR: ' . $currency_prefix . $qr_amount . ')</small>';
 
                 $id = $r['id'];
                 $sr_no = $i++;
@@ -324,6 +326,7 @@ switch ($action) {
             $paid_date    = _post('paid_date');
             $note         = _post('note');
             $payment_type = _post('payment_type'); // NEW
+            $cash_breakdown_json = _post('cash_breakdown_json');
 
             if (!in_array($payment_type, ['Cash','QR'], true)) {
                 header('Content-Type: application/json');
@@ -361,7 +364,7 @@ switch ($action) {
                 header('Content-Type: application/json');
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Max allowed for ' . $payment_type . ' is ₹' . number_format(max(0,$remain_this), 2)
+                    'message' => 'Max allowed for ' . $payment_type . ' is ' . $currency_prefix . number_format(max(0,$remain_this), 2)
                 ]);
                 exit;
             }
@@ -370,7 +373,7 @@ switch ($action) {
                 header('Content-Type: application/json');
                 echo json_encode([
                     'success' => false,
-                    'message' => 'You can handover at most ₹' . number_format(max(0,$remain_total), 2) . ' in total for this collection.'
+                    'message' => 'You can handover at most ' . $currency_prefix . number_format(max(0,$remain_total), 2) . ' in total for this collection.'
                 ]);
                 exit;
             }
@@ -382,6 +385,7 @@ switch ($action) {
             $handover->paid_by       = $user->id;
             $handover->paid_date     = $paid_date;
             $handover->note          = $note;
+            $handover->cash_breakdown = ($payment_type === 'Cash') ? ($cash_breakdown_json ?: '{}') : null;
             $handover->status        = 'Pending';
             $handover->created_at    = date('Y-m-d H:i:s');
             $handover->updated_at    = date('Y-m-d H:i:s');
