@@ -1,4 +1,6 @@
 <?php 
+
+use ORM;
 require_once dirname(__DIR__, 2) . '/system_log.php';
 
 function get_client_ip(){
@@ -1053,8 +1055,8 @@ function clean_url($url)
  }
 
 
- function stock_record($item_id, $stock, $type, $invoice_id = "", $parent_item_id = "", $vendor_id = "", $purchase_price = "", $branch_id = "", $transfer_ref = "")
- {
+function stock_record($item_id, $stock, $type, $invoice_id = "", $parent_item_id = "", $vendor_id = "", $purchase_price = "", $branch_id = "", $transfer_ref = "")
+{
     // HARD GUARD: no item, no stock record
     if (empty($item_id) || (int)$item_id <= 0) {
         return false;
@@ -1069,6 +1071,12 @@ function clean_url($url)
     $record->parent_item_id = $parent_item_id;
     $record->vendor_id      = $vendor_id;
     $record->purchase_price = $purchase_price;
+    // If branch_id not provided, try to derive from item for consistency
+    if (empty($branch_id)) {
+        $item = ORM::for_table('sys_items')->find_one($item_id);
+        $branch_id = ($item && !empty($item->branch_id)) ? $item->branch_id : null;
+    }
+
     $record->branch_id      = $branch_id;
     // Only set transfer_ref if not empty
     if (!empty($transfer_ref)) {
@@ -1506,6 +1514,13 @@ if (!function_exists('grams_to_tola')) {
     function grams_to_tola($grams)
     {
         return $grams / 11.66;
+    }
+}
+
+if (!function_exists('tola_to_grams')) {
+    function tola_to_grams($tola)
+    {
+        return $tola * 11.66;
     }
 }
 

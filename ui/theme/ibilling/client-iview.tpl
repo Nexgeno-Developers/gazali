@@ -201,6 +201,7 @@
 									<th rowspan="2" id="cell-item" class="text-semibold">{$_L['Description']}</th>
 									<th rowspan="2" id="cell-item" class="text-semibold">Image</th>
 									<th rowspan="2" id="cell-qty" class="text-center text-semibold">{$_L['Quantity']}</th>
+									<th rowspan="2" id="cell-unit" class="text-center text-semibold">Unit</th>
 									<!--<th rowspan="2" id="cell-price" class="text-center text-semibold">{$_L['Rate']}</th>-->			
 									<!--<th colspan="2" id="cell-cgst" class="text-center text-semibold">CGST</th>				
 									<th colspan="2" id="cell-cgst" class="text-center text-semibold">SGST</th>				
@@ -223,11 +224,12 @@
 										<td class="center">{$i++}</td>
 										<td class="">{$item['description']}</td>
 										<td>
-											{if !empty($item['item_img'])}
-												<img data-img="/ui/lib/imgs/invoice-contents/{$item['item_img']}" class="img-popup" width="40px" height="40px" src="/ui/lib/imgs/invoice-contents/{$item['item_img']}">
-											{/if}
-										</td>
-										<td align="right">{$item['qty']}</td>
+										{if !empty($item['item_img'])}
+											<img data-img="/ui/lib/imgs/invoice-contents/{$item['item_img']}" class="img-popup" width="40px" height="40px" src="/ui/lib/imgs/invoice-contents/{$item['item_img']}">
+										{/if}
+									</td>
+									<td align="right">{$item['qty']}</td>
+									<td align="center">{$item['unit']|default:'gram'}</td>
 										<!--<td align="right">{ib_money_format($item['amount'],$_c,$d['currency_symbol'])}</td>-->
 										<!--{if ($item['taxtype'] eq "GST")}
 										<td align="right">{($item['taxrate']/2)}</td>

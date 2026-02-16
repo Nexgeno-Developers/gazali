@@ -1,4 +1,11 @@
 <?php
+
+use Asset;
+use Countries;
+use Finance;
+use ORM;
+use Paginator;
+use User;
 _auth();
 $ui->assign('_application_menu', 'ps');
 $ui->assign('_title', $_L['Products n Services'].'- '. $config['CompanyName']);
@@ -319,6 +326,8 @@ switch ($action) {
                             if (empty($compId) || empty($compQty)) {
                                 continue;
                             }
+                            $component = ORM::for_table('sys_items')->find_one($compId);
+                            $component_branch_id = ($component && !empty($component['branch_id'])) ? $component['branch_id'] : $branch_id;
                             stock_record(
                                 $compId,
                                 $compQty * $product_stock,
@@ -327,7 +336,7 @@ switch ($action) {
                                 $id,
                                 '',
                                 '',
-                                $branch_id,
+                                $component_branch_id,
                                 ''
                             );
                         }
@@ -840,8 +849,12 @@ switch ($action) {
         $purchase_price = _post('purchase_price');
         $product_stock  = _post('product_stock');
         $product_type   = _post('product_type');
-        $branch_id   = trim((string) _post('branch_id'));
+        // $branch_id   = trim((string) _post('branch_id'));
+        // Resolve branch from the product itself; ignore POSTed branch_id
+        $item_for_branch = ORM::for_table('sys_items')->find_one($id);
+        $branch_id   = ($item_for_branch && !empty($item_for_branch->branch_id)) ? (string) $item_for_branch->branch_id : '';
         if ($branch_id === '' || $branch_id === 'all') {
+            // Prefer a branch that already has stock history for this item
             $branch_stock = product_stock_info_by_branch($id);
             if (is_array($branch_stock)) {
                 foreach ($branch_stock as $bid => $qty) {
@@ -853,6 +866,7 @@ switch ($action) {
             }
         }
         if ($branch_id === '' || $branch_id === 'all') {
+            // Fallback to user's branch, then first branch in system
             if (!empty($user->branch_id)) {
                 $branch_id = (string) $user->branch_id;
             } else {

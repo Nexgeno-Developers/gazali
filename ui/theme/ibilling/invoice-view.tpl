@@ -243,6 +243,7 @@
 									<th id="cell-item" class="text-semibold">{$_L['Item']}</th>
 									<th id="cell-item" class="text-semibold">Image</th>
 									<th id="cell-qty" class="text-center text-semibold">{$_L['Quantity']}</th>
+									<th id="cell-unit" class="text-center text-semibold">Unit</th>
 									<th id="cell-price" class="text-center text-semibold">{$_L['Rate']}</th>
 									<!--<th id="cell-gst_per" class="text-center text-semibold">{$_L['gst_per']}</th>
 									<th id="cell-gst_amt" class="text-center text-semibold">{$_L['gst_amt']}</th>-->
@@ -263,6 +264,7 @@
 										{/if}
 									</td>
 									<td class="text-center">{$item['qty']}</td>
+									<td class="text-center">{$item['unit']|default:'gram'}</td>
 									<td class="text-center amount" data-a-sign="{if $d['currency_symbol'] eq ''} {$_c['currency_code']} {else} {$d['currency_symbol']}{/if} ">{$item['amount']}</td>
 									<!--<td class="text-center amount" >{$item['taxrate']}</td>
 									<td class="text-center amount" data-a-sign="{if $d['currency_symbol'] eq ''} {$_c['currency_code']} {else} {$d['currency_symbol']}{/if} ">{$item['taxamount']}</td>-->

@@ -1,5 +1,14 @@
 <?php 
 
+use Asset;
+use Finance;
+use Model;
+use ORM;
+use Paginator;
+use Event;
+use User;
+use Validator;
+
 _auth();
 $ui->assign('_application_menu', 'dsfds');
 $ui->assign('_st', $_L['Invoices']);
@@ -1243,7 +1252,8 @@ $(document).ready(function () {
             $d->save(); //save
             $invoiceid = $d->id();
  
-            $branch_id = _post('company') ? _post('company') : 2;
+            // branch of the invoice; front-end submits company_branch_id
+            $branch_id = _post('company_branch_id') ? _post('company_branch_id') : 2;
 
 						for($i=0;$i<count($_POST['desc']);$i++ ){
 								$prod = ORM::for_table('sys_items')->where('item_number',$_POST['s_id'][$i] )->find_one();
@@ -1282,8 +1292,12 @@ $(document).ready(function () {
                                 
                                 $d->product_id = ($d->item_type == 'product') ? $_POST['p_id'][$i] : null;
                                 $d->design_id = ($d->item_type == 'design') ? $_POST['p_id'][$i] : null; 
-                                if ($d->item_type === 'product') {
-                                    stock_record($d->product_id, $d->qty, 'debit', $d->invoiceid, '', '', '', $branch_id, ''); //newly added
+								// Resolve branch for this line (prefer item branch, fall back to invoice branch)
+								$item_branch_id = ($prod && !empty($prod['branch_id'])) ? $prod['branch_id'] : $branch_id;
+								if ($d->item_type === 'product') {
+                                    // Record stock movement against the correct branch
+                                    $stock_qty = ($unit === 'tola') ? tola_to_grams($d->qty) : $d->qty;
+                                    stock_record($d->product_id, $stock_qty, 'debit', $d->invoiceid, '', '', '', $item_branch_id, ''); //newly added
                                 }
                                 if(!empty($_POST['pimg'][$i]))
                                 {
@@ -2401,9 +2415,16 @@ $inv_prefix = '';
                                 
                                     $d->product_id = ($d->item_type == 'product') ? $_POST['p_id'][$i] : null;
                                     $d->design_id = ($d->item_type == 'design') ? $_POST['p_id'][$i] : null;
+
+                                    // Resolve branch for this line (prefer item's branch)
+                                    $line_branch_id = ($prod && !empty($prod['branch_id'])) ? $prod['branch_id'] : $branch_id;
+
                                     if ($d->item_type === 'product') {
-                                        stock_record($d->product_id, $d->qty, 'debit', $d->invoiceid , '', '', '', $branch_id, ''); //newly added
+                                        // Use item's own branch when present so movements stay aligned to item branch, not user role/company
+                                        $stock_qty = ($unit === 'tola') ? tola_to_grams($d->qty) : $d->qty;
+                                        stock_record($d->product_id, $stock_qty, 'debit', $d->invoiceid , '', '', '', $line_branch_id, ''); //newly added
                                     }
+                                    $d->branch_id = $line_branch_id;
                                     if(!empty($_POST['pimg'][$i]))
                                     {
                                         $get_img = file_get_contents($_SERVER['DOCUMENT_ROOT'].'/'.$_POST['pimg'][$i]);
