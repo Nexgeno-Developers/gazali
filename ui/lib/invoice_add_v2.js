@@ -300,7 +300,14 @@ $(document).ready(function () {
 						var item_desc = $(this).closest('tr').find('td:eq(3)').text();
 						var item_desc = item_desc ? ' (' +item_desc+ ')' : '';
 						var item_price = $(this).closest('tr').find('td:eq(4)').text();
-						var stockType = ($(this).closest('tr').find('.pstock').val() || '').toLowerCase();
+						var $row = $(this).closest('tr');
+						var stockType = $.trim($row.find('.pstock').val() || '');
+						if (!stockType) {
+							// fallback: parse stock cell text (e.g., "-2 qty" or "5 tola")
+							stockType = $.trim($row.find('td:eq(5)').text().split(' ').pop() || '');
+						}
+						stockType = stockType.toLowerCase();
+						console.debug('invoice_add_v2 modal select -> stockType', stockType, 'row', rowNum);
 						var gramChecked = (stockType === 'tola') ? '' : 'checked';
 						var tolaChecked = (stockType === 'tola') ? 'checked' : '';
 						var unitValue = (stockType === 'tola') ? 'tola' : 'gram';
@@ -332,7 +339,13 @@ $(document).ready(function () {
 							var item_desc = $(this).closest('tr').find('td:eq(3)').text();
 							var item_desc = item_desc ? ' (' +item_desc+ ')' : '';
 							var item_price = $(this).closest('tr').find('td:eq(4)').text();
-							var stockType = ($(this).closest('tr').find('.pstock').val() || '').toLowerCase();
+							var $row = $(this).closest('tr');
+							var stockType = $.trim($row.find('.pstock').val() || '');
+							if (!stockType) {
+								stockType = $.trim($row.find('td:eq(5)').text().split(' ').pop() || '');
+							}
+							stockType = stockType.toLowerCase();
+							console.debug('invoice_add_v2 modal select (customize) -> stockType', stockType, 'row', rowNum);
 							var gramChecked = (stockType === 'tola') ? '' : 'checked';
 							var tolaChecked = (stockType === 'tola') ? 'checked' : '';
 							var unitValue = (stockType === 'tola') ? 'tola' : 'gram';

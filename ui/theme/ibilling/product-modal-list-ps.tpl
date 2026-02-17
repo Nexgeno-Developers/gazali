@@ -10,7 +10,7 @@
         });
 
         // show first category by default
-        var firstCat = $('.category-radio').first().val() || '';
+        var firstCat = $('.category-radio:checked').val() || $('.category-radio').first().val() || '';
         if (firstCat) {
             get_list(firstCat);
         }
@@ -103,7 +103,7 @@
           <div id="Customized" class="tab-pane fade">
 
     {assign itemCategory  get_item_categories()}
-    {foreach $itemCategory as $cat}
+    {foreach $itemCategory as $cat name=catloop}
     {assign cat_val  str_replace('&', '', $cat['value'])}
     <div class="radio-button margintop_20">
         <input class="category-radio" id="{$cat_val}" type="radio" name="product_category" value="{$cat_val}" onchange="get_list(this.value);" {if $smarty.foreach.catloop.first}checked{/if}> 

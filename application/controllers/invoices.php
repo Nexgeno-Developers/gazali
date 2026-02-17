@@ -217,7 +217,20 @@ $(document).ready(function () {
             $ui->assign('sales_users', $sales_users_q->find_array());
             $ui->assign('selected_sales_person', !empty($d['created_by']) ? (int) $d['created_by'] : (int) $user['id']);
             $items = ORM::for_table('sys_invoiceitems')->where('invoiceid', $id)->order_by_asc('id')->find_many();
-						$ui->assign('items', $items);
+            // Enrich items with product_stock_type for UI (qty should hide Gram/Tola)
+            foreach ($items as $itm) {
+                if ($itm['item_type'] === 'product' && !empty($itm['product_id'])) {
+                    $prod = ORM::for_table('sys_items')->find_one($itm['product_id']);
+                    if ($prod) {
+                        $itm->product_stock_type = $prod['product_stock_type'];
+                        if (strtolower((string) $prod['product_stock_type']) === 'qty' && strtolower((string) $itm['unit']) !== 'qty') {
+                            // Default to qty to avoid showing radios on edit for qty-only products
+                            $itm->unit = 'qty';
+                        }
+                    }
+                }
+            }
+            $ui->assign('items', $items);
 
             $a = ORM::for_table('crm_accounts')->find_one($d['userid']);
             $ui->assign('a', $a);
