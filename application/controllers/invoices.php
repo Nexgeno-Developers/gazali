@@ -4692,6 +4692,25 @@ $(".cdelete").click(function (e) {
 
                 $item_desc = $product['description'] ? ' ('.$product['description'].')' : '';
 
+                $stockType = isset($product['product_stock_type']) ? strtolower($product['product_stock_type']) : '';
+                $gram_checked = ($stockType === 'tola') ? '' : 'checked';
+                $tola_checked = ($stockType === 'tola') ? 'checked' : '';
+                $unit_value = ($stockType === 'tola') ? 'tola' : 'gram';
+
+                if($stockType === 'qty'){
+                    $unit_controls = '
+                        <span class="unit-label">Qty</span>
+                        <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                    ';
+                }
+                else{
+                    $unit_controls = '
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" '.$gram_checked.'> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola" '.$tola_checked.'> Tola</label>
+                        <input type="hidden" class="unit-value" name="unit[]" value="'.$unit_value.'">
+                    ';
+                }
+
                 $items .= 
                 '
                 <tr>
@@ -4708,9 +4727,7 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="1" name="qty[]">
                     </td>
                     <td>
-                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" checked> Gram</label>
-                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola"> Tola</label>
-                        <input type="hidden" class="unit-value" name="unit[]" value="gram">
+                        '.$unit_controls.'
                     </td>
                     <td>
                         <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
@@ -4745,6 +4762,25 @@ $(".cdelete").click(function (e) {
 
                 $item_desc = $product['description'] ? ' ('.$product['description'].')' : '';
 
+                $stockType = isset($product['product_stock_type']) ? strtolower($product['product_stock_type']) : '';
+                $gram_checked = ($stockType === 'tola') ? '' : 'checked';
+                $tola_checked = ($stockType === 'tola') ? 'checked' : '';
+                $unit_value = ($stockType === 'tola') ? 'tola' : 'gram';
+
+                if($stockType === 'qty'){
+                    $unit_controls = '
+                        <span class="unit-label">Qty</span>
+                        <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                    ';
+                }
+                else{
+                    $unit_controls = '
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" '.$gram_checked.'> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola" '.$tola_checked.'> Tola</label>
+                        <input type="hidden" class="unit-value" name="unit[]" value="'.$unit_value.'">
+                    ';
+                }
+
                 $items .= 
                 '
                 <tr>
@@ -4761,9 +4797,7 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="1" name="qty[]">
                     </td>
                     <td>
-                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" checked> Gram</label>
-                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola"> Tola</label>
-                        <input type="hidden" class="unit-value" name="unit[]" value="gram">
+                        '.$unit_controls.'
                     </td>
                     <td>
                         <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
@@ -4842,6 +4876,28 @@ $(".cdelete").click(function (e) {
                     continue;
                 }
 
+                $stockType = isset($product['product_stock_type']) ? strtolower($product['product_stock_type']) : '';
+                $gram_checked = ($stockType === 'tola') ? '' : 'checked';
+                $tola_checked = ($stockType === 'tola') ? 'checked' : '';
+                $unit_value = ($stockType === 'tola') ? 'tola' : 'gram';
+
+                if($stockType === 'qty'){
+                    $unit_controls = '
+                        <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                    ';
+                    // $unit_controls = '
+                    //     <span class="unit-label">Qty</span>
+                    //     <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                    // ';
+                }
+                else{
+                    $unit_controls = '
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" '.$gram_checked.'> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola" '.$tola_checked.'> Tola</label>
+                        <input type="hidden" class="unit-value" name="unit[]" value="'.$unit_value.'">
+                    ';
+                }
+
                 $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
 
                 $items .= 
@@ -4860,9 +4916,7 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="'.$compQty.'" name="qty[]">
                     </td>
                     <td>
-                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" checked> Gram</label>
-                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola"> Tola</label>
-                        <input type="hidden" class="unit-value" name="unit[]" value="gram">
+                        '.$unit_controls.'
                     </td>
                     <td>
                         <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
@@ -4948,6 +5002,28 @@ $(".cdelete").click(function (e) {
                     continue;
                 }
 
+                $stockType = isset($product['product_stock_type']) ? strtolower($product['product_stock_type']) : '';
+                $gram_checked = ($stockType === 'tola') ? '' : 'checked';
+                $tola_checked = ($stockType === 'tola') ? 'checked' : '';
+                $unit_value = ($stockType === 'tola') ? 'tola' : 'gram';
+
+                if($stockType === 'qty'){
+                    $unit_controls = '
+                        <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                    ';
+                    // $unit_controls = '
+                    //     <span class="unit-label">Qty</span>
+                    //     <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                    // ';
+                }
+                else{
+                    $unit_controls = '
+                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" '.$gram_checked.'> Gram</label>
+                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola" '.$tola_checked.'> Tola</label>
+                        <input type="hidden" class="unit-value" name="unit[]" value="'.$unit_value.'">
+                    ';
+                }
+
                 $product_img = $product['product_image'] ? '<a target="_blank" href="'.$product['product_image'].'"><img width="50px" height="50px" src="'.$product['product_image'].'"></a>' : '-';
 
                 $items .= 
@@ -4966,9 +5042,7 @@ $(".cdelete").click(function (e) {
                         <input type="text" class="form-control qty" value="'.$compQty.'" name="qty[]">
                     </td>
                     <td>
-                        <label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="gram" checked> Gram</label>
-                        <label><input type="radio" class="unit-radio" name="unit_radio_new_'.$last_row.'" value="tola"> Tola</label>
-                        <input type="hidden" class="unit-value" name="unit[]" value="gram">
+                        '.$unit_controls.'
                     </td>
                     <td>
                         <input type="text" class="form-control item_price" name="amount[]" value="'.$product['sales_price'].'">
