@@ -198,7 +198,8 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
                       echo '<strong>Customer Name:</strong> '. $d['account']. ' <br>';
 					?>
 					<p><b>Invoice Date :</b> <?php echo $d['date']; ?></p>
-					<p><b>Delivery Date :</b> <?php echo $d['duedate']; ?></p>					
+					<p><b>Delivery Date :</b> <?php echo $d['duedate']; ?></p>
+					<p><b>Sales Person :</b> <?php echo isset($sales_person_name) ? $sales_person_name : ''; ?></p>					
 				</span>
 			</td>
 		</tr>

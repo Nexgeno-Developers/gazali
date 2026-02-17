@@ -362,7 +362,7 @@ input[type=number]::-webkit-outer-spin-button {
 						<label for="advance_method">Advance Payment Method</label>
 						<select class="form-control" name="advance_method" id="advance_method">
 							<option value="Cash">Cash</option>
-							<option value="QR">QR</option>
+							<option value="Online">ONLINE</option>
 						</select>
 					</div>					
 					<div class="form-group">

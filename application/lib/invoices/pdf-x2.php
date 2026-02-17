@@ -320,6 +320,7 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 					<th id="cell-item" class="text-center text-semibold">Status</th>
 					<th id="cell-item" class="text-center text-semibold">Invoice Date</th>
 					<th id="cell-item" class="text-center text-semibold">Delivery Date</th>
+					<th id="cell-item" class="text-center text-semibold">Sales Person</th>
 				</tr>
 				<tr>
 					<td align="center">
@@ -332,6 +333,10 @@ The location of this file is here- application/lib/invoices/pdf-x2.php
 
 					<td align="center">
 						<?php echo date($config['df'], strtotime($d['duedate'])); ?>
+					</td>
+
+					<td align="center">
+						<?php echo isset($sales_person_name) ? $sales_person_name : ''; ?>
 					</td>
 				</tr>
 

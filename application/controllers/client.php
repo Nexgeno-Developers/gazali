@@ -378,6 +378,20 @@ switch ($action) {
                 echo 'Sorry Token does not match!';
                 exit;
             }
+            // resolve sales person name
+            $sales_person_name = '-';
+            $sp_id = !empty($d['sales_person_id']) ? (int)$d['sales_person_id'] : 0;
+            if ($sp_id > 0) {
+                $sp = ORM::for_table('sys_users')->select('fullname')->select('username')->find_one($sp_id);
+                if ($sp) {
+                    $sales_person_name = !empty($sp['fullname']) ? $sp['fullname'] : $sp['username'];
+                }
+            } elseif (!empty($d['created_by'])) {
+                $sp = ORM::for_table('sys_users')->select('fullname')->select('username')->find_one((int)$d['created_by']);
+                if ($sp) {
+                    $sales_person_name = !empty($sp['fullname']) ? $sp['fullname'] : $sp['username'];
+                }
+            }
             //find all activity for this user
             $items = ORM::for_table('sys_invoiceitems')->where('invoiceid',$id)->order_by_asc('id')->find_many();
 						foreach ($items as &$row){
@@ -487,6 +501,20 @@ switch ($action) {
             if($token != $vtoken){
                 echo 'Sorry Token does not match!';
                 exit;
+            }
+            // resolve sales person name
+            $sales_person_name = '-';
+            $sp_id = !empty($d['sales_person_id']) ? (int)$d['sales_person_id'] : 0;
+            if ($sp_id > 0) {
+                $sp = ORM::for_table('sys_users')->select('fullname')->select('username')->find_one($sp_id);
+                if ($sp) {
+                    $sales_person_name = !empty($sp['fullname']) ? $sp['fullname'] : $sp['username'];
+                }
+            } elseif (!empty($d['created_by'])) {
+                $sp = ORM::for_table('sys_users')->select('fullname')->select('username')->find_one((int)$d['created_by']);
+                if ($sp) {
+                    $sales_person_name = !empty($sp['fullname']) ? $sp['fullname'] : $sp['username'];
+                }
             }
             //find all activity for this user
             $items = ORM::for_table('sys_invoiceitems')->where('invoiceid',$id)->order_by_asc('id')->find_many();
