@@ -118,8 +118,8 @@ switch ($action) {
                 $amount = number_format($r['collected_amount'], 2, '.', '');
                 $qr_amount = number_format($r['qr_amount'], 2, '.', '');
                 $cash_amount = number_format($r['cash_amount'], 2, '.', '');
-                // Amount cell with small QR/Cash breakdown
-                $amount_display = $currency_prefix . $amount . '<br> <small class="text-muted">(Cash: ' . $currency_prefix . $cash_amount . ' | QR: ' . $currency_prefix . $qr_amount . ')</small>';
+                // Amount cell with small Online/Cash breakdown
+                $amount_display = $currency_prefix . $amount . '<br> <small class="text-muted">(Cash: ' . $currency_prefix . $cash_amount . ' | Online: ' . $currency_prefix . $qr_amount . ')</small>';
 
                 $id = $r['id'];
                 $sr_no = $i++;
@@ -308,7 +308,7 @@ switch ($action) {
 
         $paid_qr_all = (float) ORM::for_table('branch_handover_entries')
             ->where('collection_id', $collection_id)
-            ->where('payment_type', 'QR')
+            ->where('payment_type', 'Online')
             ->sum('amount_paid');
 
         // Remaining (overall + per type)
@@ -328,7 +328,7 @@ switch ($action) {
             $payment_type = _post('payment_type'); // NEW
             $cash_breakdown_json = _post('cash_breakdown_json');
 
-            if (!in_array($payment_type, ['Cash','QR'], true)) {
+            if (!in_array($payment_type, ['Cash','Online'], true)) {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => 'Invalid payment type']);
                 exit;

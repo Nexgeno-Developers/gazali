@@ -43,7 +43,7 @@
     </div>
     
     <div class="form-group">
-      <label class="col-lg-4 control-label">Cash Amount (₹) <small class="red">*</small></label>
+      <label class="col-lg-4 control-label">Cash Amount (QAR) <small class="red">*</small></label>
       <div class="col-lg-8">
         <input type="number" step="0.01" min="0" name="cash_amount" id="cash_amount"
                class="form-control"
@@ -52,7 +52,7 @@
     </div>
 
     <div class="form-group">
-      <label class="col-lg-4 control-label">QR Amount (₹) <small class="red">*</small></label>
+      <label class="col-lg-4 control-label">Online Amount (QAR) <small class="red">*</small></label>
       <div class="col-lg-8">
         <input type="number" step="0.01" min="0" name="qr_amount" id="qr_amount"
                class="form-control"
@@ -61,10 +61,10 @@
     </div>
 
     <div class="form-group">
-      <label class="col-lg-4 control-label">Amount (₹) <small class="red">*</small></label>
+      <label class="col-lg-4 control-label">Amount (QAR) <small class="red">*</small></label>
       <div class="col-lg-8">
         <input type="number" step="0.01" name="amount" id="amount_total" class="form-control" value="{$collection.collected_amount|default:''}" required readonly>
-        <small class="help-block">Auto-calculated: Cash + QR</small>
+        <small class="help-block">Auto-calculated: Cash + Online</small>
         <small id="tx_hint" class="help-block" style="display:none;">Fetching transactions…</small>
       </div>
     </div>

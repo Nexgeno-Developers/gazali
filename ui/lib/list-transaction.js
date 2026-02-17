@@ -96,12 +96,12 @@ $(function () {
                 <div class="group">
                     <div class="line"><span class="label">Income by Method</span> → 
                         Cash: <b>${by.income.cash || '0.00'}</b> |
-                        QR: <b>${by.income.qr || '0.00'}</b> |
+                        Online: <b>${by.income.qr || '0.00'}</b> |
                         Other: <b>${by.income.other || '0.00'}</b>
                     </div>
                     <div class="line"><span class="label">Expense by Method</span> → 
                         Cash: <b>${by.expense.cash || '0.00'}</b> |
-                        QR: <b>${by.expense.qr || '0.00'}</b> |
+                        Online: <b>${by.expense.qr || '0.00'}</b> |
                         Other: <b>${by.expense.other || '0.00'}</b>
                     </div>
                 </div>

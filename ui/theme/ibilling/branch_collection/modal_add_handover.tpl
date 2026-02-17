@@ -8,28 +8,28 @@
         <div class="alert alert-info" role="alert" style="margin-bottom:0">
             <strong>Nothing pending.</strong><br>
             Requested: <b>{$currency_prefix}{$cap_total|number_format:2:'.':''}</b>
-            (Cash: {$currency_prefix}{$cap_cash|number_format:2:'.':''}, QR: {$currency_prefix}{$cap_qr|number_format:2:'.':''})<br>
+            (Cash: {$currency_prefix}{$cap_cash|number_format:2:'.':''}, Online: {$currency_prefix}{$cap_qr|number_format:2:'.':''})<br>
             Handed over: <b>{$currency_prefix}{$paid_all|number_format:2:'.':''}</b>
-            (Cash: {$currency_prefix}{$paid_cash|number_format:2:'.':''}, QR: {$currency_prefix}{$paid_qr|number_format:2:'.':''})<br>
+            (Cash: {$currency_prefix}{$paid_cash|number_format:2:'.':''}, Online: {$currency_prefix}{$paid_qr|number_format:2:'.':''})<br>
             Remaining: <b>{$currency_prefix}{$remain_total|number_format:2:'.':''}</b>
-            (Cash: {$currency_prefix}{$remain_cash|number_format:2:'.':''}, QR: {$currency_prefix}{$remain_qr|number_format:2:'.':''})
+            (Cash: {$currency_prefix}{$remain_cash|number_format:2:'.':''}, Online: {$currency_prefix}{$remain_qr|number_format:2:'.':''})
         </div>
     {else}
         <div class="well" style="padding:10px; margin-bottom:12px;">
             <div style="display:flex; gap:18px; flex-wrap:wrap; font-size:13px;">
                 <div>
                     Requested: <b>{$currency_prefix}{$cap_total|number_format:2:'.':''}</b><br>
-                    <small class="text-muted">(Cash: {$currency_prefix}{$cap_cash|number_format:2:'.':''} | QR: {$currency_prefix}{$cap_qr|number_format:2:'.':''})</small>
+                    <small class="text-muted">(Cash: {$currency_prefix}{$cap_cash|number_format:2:'.':''} | Online: {$currency_prefix}{$cap_qr|number_format:2:'.':''})</small>
                 </div>
                 <div>
                     Already handed over: <b>{$currency_prefix}{$paid_all|number_format:2:'.':''}</b><br>
-                    <small class="text-muted">(Cash: {$currency_prefix}{$paid_cash|number_format:2:'.':''} | QR: {$currency_prefix}{$paid_qr|number_format:2:'.':''})</small>
+                    <small class="text-muted">(Cash: {$currency_prefix}{$paid_cash|number_format:2:'.':''} | Online: {$currency_prefix}{$paid_qr|number_format:2:'.':''})</small>
                 </div>
                 <div>
                     Remaining: <b id="remaining_total">{$currency_prefix}{$remain_total|number_format:2:'.':''}</b><br>
                     <small class="text-muted">
                         (Cash: <b id="remain_cash">{$currency_prefix}{$remain_cash|number_format:2:'.':''}</b> |
-                        QR: <b id="remain_qr">{$currency_prefix}{$remain_qr|number_format:2:'.':''}</b>)
+                        Online: <b id="remain_qr">{$currency_prefix}{$remain_qr|number_format:2:'.':''}</b>)
                     </small>
                 </div>
             </div>
@@ -42,7 +42,7 @@
                 <div class="col-lg-8">
                     <select name="payment_type" id="payment_type" class="form-control" required>
                         <option value="Cash" {if $remain_cash <= 0}disabled{/if}>Cash {if $remain_cash <= 0}(No balance){/if}</option>
-                        <option value="QR"   {if $remain_qr   <= 0}disabled{/if}>QR {if $remain_qr   <= 0}(No balance){/if}</option>
+                        <option value="Online"   {if $remain_qr   <= 0}disabled{/if}>Online {if $remain_qr   <= 0}(No balance){/if}</option>
                     </select>
                     <small class="text-muted">Choose where this handover belongs.</small>
                 </div>
@@ -170,7 +170,7 @@
           function currentMax(){
             var rc = toN(amt.getAttribute('data-remain-cash'));
             var rq = toN(amt.getAttribute('data-remain-qr'));
-            return (sel.value === 'QR') ? rq : rc;
+            return (sel.value === 'Online') ? rq : rc;
           }
 
           function updateHint(){

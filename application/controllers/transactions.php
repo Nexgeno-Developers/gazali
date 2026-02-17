@@ -769,7 +769,7 @@ case 'set_view_mode':
         // NOTE: We'll do small helper closures to keep clones clean.
 
         $qr_methods = [
-            'qr', 'upi', 'upi-qr', 'bhim', 'gpay', 'google pay', 'phonepe', 'paytm', 'paytm qr', 'amazon pay', 'qr-code'
+            'qr', 'online', 'upi', 'upi-qr', 'bhim', 'gpay', 'google pay', 'phonepe', 'paytm', 'paytm qr', 'amazon pay', 'qr-code'
         ];
         // Build IN list string for where_raw
         $qr_in_sql = implode(',', array_fill(0, count($qr_methods), '?'));
