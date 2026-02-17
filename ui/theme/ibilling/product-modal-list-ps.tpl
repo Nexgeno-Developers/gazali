@@ -77,6 +77,7 @@
                                     <input type="checkbox" class="si" value="{$ds['item_number']}">
                                     <input type="hidden" class="pid" value="{$ds['id']}">
                                     <input type="hidden" class="pimg" value="{$ds['product_image']}">
+                                    <input type="hidden" class="pstock" value="{$ds['product_stock_type']}">
                                 </td>
                                 <td>
                                     <!--{$ds['item_number']}--> 
@@ -135,6 +136,7 @@
                                     <input type="checkbox" class="si" value="{$ds['item_number']}">
                                     <input type="hidden" class="pid" value="{$ds['id']}">
                                     <input type="hidden" class="pimg" value="{$ds['product_image']}">
+                                    <input type="hidden" class="pstock" value="{$ds['product_stock_type']}">
                                 </td>
                                 <td>
                                     <!--{$ds['item_number']}--> 

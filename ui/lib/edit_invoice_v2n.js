@@ -302,11 +302,21 @@ $(document).ready(function () {
 						var item_desc = $(this).closest('tr').find('td:eq(3)').text();
 						var item_desc = item_desc ? ' (' +item_desc+ ')' : '';
 						var item_price = $(this).closest('tr').find('td:eq(4)').text();
+						var stockType = ($(this).closest('tr').find('.pstock').val() || '').toLowerCase();
+						var gramChecked = (stockType === 'tola') ? '' : 'checked';
+						var tolaChecked = (stockType === 'tola') ? 'checked' : '';
+						var unitValue = (stockType === 'tola') ? 'tola' : 'gram';
+						var unitHtml;
+						if (stockType === 'qty') {
+							unitHtml = '<input type="hidden" class="unit-value" name="unit[]" value="qty">';
+						} else {
+							unitHtml = '<label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="gram" ' + gramChecked + '> Gram</label><label><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="tola" ' + tolaChecked + '> Tola</label><input type="hidden" class="unit-value" name="unit[]" value="' + unitValue + '">';
+						}
 						get_tax_opt();
 				//  obj.push(innertext);
 						$invoice_items.find('tbody').append(
 					'<tr>'+
-					'<td class="number">' + pimage + '<input type="hidden" class="form-control sid" name="s_id[]" value="' + id + '" id="s_id"><input type="hidden" class="form-control item_id" name="p_id[]" value="' + pid + '" id="p_id"><input type="hidden" name="pimg[]" value="'+pimg+'"></td>'+'<td><input type="text" class="form-control item_name" name="desc[]" value="' + item_name  + item_desc + '" id="i_' + rowNum + '" required></td>'+' <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td><label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="gram" checked> Gram</label><label><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="tola"> Tola</label><input type="hidden" class="unit-value" name="unit[]" value="gram"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + item_price + '"></td> <td class="ltotal"><input type="number" class="form-control lvtotal" name="total[]" value="' + item_price + '" readonly  required></td><td class="hide"><input type="hidden" name="item_type[]" value="product"></td></tr>' );
+					'<td class="number">' + pimage + '<input type="hidden" class="form-control sid" name="s_id[]" value="' + id + '" id="s_id"><input type="hidden" class="form-control item_id" name="p_id[]" value="' + pid + '" id="p_id"><input type="hidden" name="pimg[]" value="'+pimg+'"></td>'+'<td><input type="text" class="form-control item_name" name="desc[]" value="' + item_name  + item_desc + '" id="i_' + rowNum + '" required></td>'+' <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td>' + unitHtml + '</td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + item_price + '"></td> <td class="ltotal"><input type="number" class="form-control lvtotal" name="total[]" value="' + item_price + '" readonly  required></td><td class="hide"><input type="hidden" name="item_type[]" value="product"></td></tr>' );
 	
 					//sidecalculation();
 					});
@@ -324,11 +334,21 @@ $(document).ready(function () {
 							var item_desc = $(this).closest('tr').find('td:eq(3)').text();
 							var item_desc = item_desc ? ' (' +item_desc+ ')' : '';
 							var item_price = $(this).closest('tr').find('td:eq(4)').text();
+							var stockType = ($(this).closest('tr').find('.pstock').val() || '').toLowerCase();
+							var gramChecked = (stockType === 'tola') ? '' : 'checked';
+							var tolaChecked = (stockType === 'tola') ? 'checked' : '';
+							var unitValue = (stockType === 'tola') ? 'tola' : 'gram';
+							var unitHtml;
+							if (stockType === 'qty') {
+								unitHtml = '<input type="hidden" class="unit-value" name="unit[]" value="qty">';
+							} else {
+								unitHtml = '<label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="gram" ' + gramChecked + '> Gram</label><label><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="tola" ' + tolaChecked + '> Tola</label><input type="hidden" class="unit-value" name="unit[]" value="' + unitValue + '">';
+							}
 							get_tax_opt();
 					//  obj.push(innertext);
 							$invoice_items.find('tbody').append(
 						'<tr>'+
-						'<td class="number">' + pimage + '<input type="hidden" class="form-control sid" name="s_id[]" value="' + id + '" id="s_id"><input type="hidden" class="form-control item_id" name="p_id[]" value="' + pid + '" id="p_id"><input type="hidden" name="pimg[]" value="'+pimg+'"></td>'+'<td><input type="text" class="form-control item_name" name="desc[]" value="' + item_name  + item_desc + '" id="i_' + rowNum + '" required></td>'+' <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td><label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="gram" checked> Gram</label><label><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="tola"> Tola</label><input type="hidden" class="unit-value" name="unit[]" value="gram"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + item_price + '"></td> <td class="ltotal"><input type="number" class="form-control lvtotal" name="total[]" value="' + item_price + '" readonly  required></td><td class="hide"><input type="hidden" name="item_type[]" value="product"></td></tr>' );
+						'<td class="number">' + pimage + '<input type="hidden" class="form-control sid" name="s_id[]" value="' + id + '" id="s_id"><input type="hidden" class="form-control item_id" name="p_id[]" value="' + pid + '" id="p_id"><input type="hidden" name="pimg[]" value="'+pimg+'"></td>'+'<td><input type="text" class="form-control item_name" name="desc[]" value="' + item_name  + item_desc + '" id="i_' + rowNum + '" required></td>'+' <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td>' + unitHtml + '</td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + item_price + '"></td> <td class="ltotal"><input type="number" class="form-control lvtotal" name="total[]" value="' + item_price + '" readonly  required></td><td class="hide"><input type="hidden" name="item_type[]" value="product"></td></tr>' );
 		
 						//sidecalculation();
 						});

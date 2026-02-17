@@ -761,6 +761,8 @@ $(document).ready(function () {
 									$posted_unit = strtolower(trim($_POST['unit'][$i]));
 									if ($posted_unit === 'tola') {
 										$unit = 'tola';
+									} elseif ($posted_unit === 'qty') {
+										$unit = 'qty';
 									}
 								}
 								$d->unit = $unit;
@@ -1265,13 +1267,15 @@ $(document).ready(function () {
 								$d->description = $_POST['desc'][$i];
 								$d->qty = Finance::amount_fix($_POST['qty'][$i]);
 								$d->amount = Finance::amount_fix($_POST['amount'][$i]);
-								$unit = 'gram';
-								if (isset($_POST['unit'][$i])) {
-									$posted_unit = strtolower(trim($_POST['unit'][$i]));
-									if ($posted_unit === 'tola') {
-										$unit = 'tola';
+									$unit = 'gram';
+									if (isset($_POST['unit'][$i])) {
+										$posted_unit = strtolower(trim($_POST['unit'][$i]));
+										if ($posted_unit === 'tola') {
+											$unit = 'tola';
+										} elseif ($posted_unit === 'qty') {
+											$unit = 'qty';
+										}
 									}
-								}
 								$d->unit = $unit;
 								//get tax rate by id
 								$ptaxrate = ORM::for_table('sys_tax')->find_one($_POST['taxed']);
@@ -2393,6 +2397,8 @@ $inv_prefix = '';
 										$posted_unit = strtolower(trim($_POST['unit'][$i]));
 										if ($posted_unit === 'tola') {
 											$unit = 'tola';
+										} elseif ($posted_unit === 'qty') {
+											$unit = 'qty';
 										}
 									}
 									$d->unit = $unit;
