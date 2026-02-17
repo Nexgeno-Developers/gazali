@@ -42,11 +42,24 @@
 
                         <div class="col-md-3 invoice-main-div-dropdown">
                             <div class="form-group">
+                                <label for="sales_person">Sales Person</label>
+                                <select name="sales_person" id="sales_person" class="form-control">
+                                    <option value="">All</option>
+                                    {foreach $sales_users as $su}
+                                        <option value="{$su.id}">{$su.fullname|default:$su.username}</option>
+                                    {/foreach}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 invoice-main-div-dropdown">
+                            <div class="form-group">
                                 <label for="type">Date Filter By</label>
                                 <select name="type" id="type" class="form-control">
                                     <option value="">All</option>
                                     <option value="invoice_date">Invoice Date</option>
                                     <option value="delivery_date">Delivery Date</option>
+                                    <option value="created_at">Created At</option>
                                 </select>
                             </div>
                         </div>
@@ -133,12 +146,19 @@
                                 <th>Payment Status</th>
                                 <th>Invoice Status</th>
                                 <th>Created By</th>
-                                <th>Updated At</th>
+                                <th>Sales Person</th>
                                 <th>Created At</th>
                                 <th class="text-right">{$_L['Manage']}</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-right">Total</th>
+                                <th class="text-right" id="amountTotal"></th>
+                                <th colspan="9"></th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -218,6 +238,20 @@ $(function(){
             { orderable: false, targets: [12] }
         ],
         drawCallback: function(settings){
+            // update footer total using server-provided sum
+            var totalAmount = null;
+            if (settings.json && settings.json.total_amount_filtered !== undefined) {
+                totalAmount = settings.json.total_amount_filtered;
+            } else if (settings.json && settings.json.total_amount !== undefined) {
+                totalAmount = settings.json.total_amount;
+            }
+            if (totalAmount !== null) {
+                var num = parseFloat(totalAmount);
+                $('#amountTotal').text(isNaN(num) ? '' : num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            } else {
+                $('#amountTotal').text('');
+            }
+
             // Initialize AutoNumeric for amount column
             $('.amount').autoNumeric('init', {
                 dGroup: 3,

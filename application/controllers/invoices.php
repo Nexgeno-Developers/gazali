@@ -215,7 +215,7 @@ $(document).ready(function () {
                 $sales_users_q->where('branch_id', $user->branch_id);
             }
             $ui->assign('sales_users', $sales_users_q->find_array());
-            $ui->assign('selected_sales_person', !empty($d['created_by']) ? (int) $d['created_by'] : (int) $user['id']);
+            $ui->assign('selected_sales_person', !empty($d['sales_person_id']) ? (int) $d['sales_person_id'] : (!empty($d['created_by']) ? (int) $d['created_by'] : (int) $user['id']));
             $items = ORM::for_table('sys_invoiceitems')->where('invoiceid', $id)->order_by_asc('id')->find_many();
             // Enrich items with product_stock_type for UI (qty should hide Gram/Tola)
             foreach ($items as $itm) {
@@ -428,10 +428,10 @@ $(document).ready(function () {
             $ui->assign('a', $a);
             $ui->assign('d', $d);
             $sales_person_name = '-';
-            if (!empty($d['created_by'])) {
+            if (!empty($d['sales_person_id'])) {
                 $sales_person = ORM::for_table('sys_users')
                     ->select('fullname')
-                    ->find_one((int) $d['created_by']);
+                    ->find_one((int) $d['sales_person_id']);
                 if ($sales_person && !empty($sales_person['fullname'])) {
                     $sales_person_name = $sales_person['fullname'];
                 }
@@ -1259,7 +1259,10 @@ $(document).ready(function () {
             $d->currency = $currency;
             $d->currency_symbol = $currency_symbol;
             $d->currency_rate = $currency_rate;
-            $d->created_by = $sales_person_id;
+            // creator is the logged-in user
+            $d->created_by = (int) $user->id;
+            // store selected sales person separately
+            $d->sales_person_id = $sales_person_id;
             $d->d_measure  = $d_measure;
             $d->additional_imgs = json_encode($img_array);
             $d->updated_at = time();
@@ -1672,6 +1675,17 @@ $(".cdelete").click(function (e) {
 
         $ui->assign('branches', $branches);
 
+        // Sales person options (super admin = all, branch admin = own branch)
+        $sales_users_q = ORM::for_table('sys_users')
+            ->select('id')
+            ->select('fullname')
+            ->select('username')
+            ->order_by_asc('fullname');
+        if ((int) $user->roleid !== 0) {
+            $sales_users_q->where('branch_id', $user->branch_id);
+        }
+        $ui->assign('sales_users', $sales_users_q->find_array());
+
         $mode_js = Asset::js(array('datatables.min', 'dataTables.buttons.min', 'buttons.print.min', 'numeric','footable/js/footable.all.min','contacts/mode_search'));
 
         // load DataTables css/js assets
@@ -1701,7 +1715,7 @@ $(".cdelete").click(function (e) {
 
         // map datatable column index -> db expression
         // displayed columns: 0 Invoice No, 1 Customer, 2 Phone, 3 Amount, 4 Invoice Date, 5 Delivery Date, 6 Reminder Date,
-        // 7 Payment Status, 8 Invoice Status, 9 Created By, 10 Updated At, 11 Created At, 12 Manage
+        // 7 Payment Status, 8 Invoice Status, 9 Created By, 10 Sales Person, 11 Created At, 12 Manage
         $columns = [
             0 => 't.id',         // invoice no (we will search invoice number fields separately)
             1 => 'c.account',    // customer
@@ -1713,7 +1727,7 @@ $(".cdelete").click(function (e) {
             7 => 't.status',
             8 => 't.delivery_status', // use this as Invoice Status
             9 => 'u.fullname',
-            10 => 't.updated_at',
+            10 => 'sp.fullname',
             11 => 't.created_at'
         ];
 
@@ -1725,7 +1739,7 @@ $(".cdelete").click(function (e) {
         $start  = isset($request['start']) ? max(0, (int)$request['start']) : 0;
 
         // ordering
-        $order_index = isset($request['order'][0]['column']) ? (int)$request['order'][0]['column'] : 12; // default created_at
+        $order_index = isset($request['order'][0]['column']) ? (int)$request['order'][0]['column'] : 11; // default created_at
         $order_col = isset($columns[$order_index]) ? $columns[$order_index] : 't.created_at';
         $order_dir = (isset($request['order'][0]['dir']) && strtolower($request['order'][0]['dir']) === 'asc') ? 'ASC' : 'DESC';
 
@@ -1737,9 +1751,11 @@ $(".cdelete").click(function (e) {
             ->select('c.company', 'customer_company')
             ->select('b.alias', 'branch_alias')
             ->select('u.fullname', 'created_by_name')
+            ->select('sp.fullname', 'sales_person_name')
             ->join('crm_accounts', ['t.userid', '=', 'c.id'], 'c')
             ->left_outer_join('sys_accounts', ['t.company_id', '=', 'b.id'], 'b')
-            ->left_outer_join('sys_users', ['t.created_by', '=', 'u.id'], 'u');
+            ->left_outer_join('sys_users', ['t.created_by', '=', 'u.id'], 'u')
+            ->left_outer_join('sys_users', ['t.sales_person_id', '=', 'sp.id'], 'sp');
 
         // --- global search (DataTables search)
         if (!empty($request['search']['value'])) {
@@ -1792,14 +1808,28 @@ $(".cdelete").click(function (e) {
             $dt = $request['date_to'];
             if ($request['type'] === 'invoice_date') {
                 $base_q->where_raw('t.date BETWEEN ? AND ?', [$df, $dt]);
-            } else {
+            } elseif ($request['type'] === 'delivery_date') {
                 // delivery_date
                 $base_q->where_raw('t.duedate BETWEEN ? AND ?', [$df, $dt]);
+            } elseif ($request['type'] === 'created_at') {
+                $start_ts = strtotime($df . ' 00:00:00');
+                $end_ts = strtotime($dt . ' 23:59:59');
+                if ($start_ts && $end_ts) {
+                    $base_q->where_raw('t.created_at BETWEEN ? AND ?', [$start_ts, $end_ts]);
+                }
             }
         } else {
             // fallback single-date filters if provided
             if (!empty($request['date_from']) && !empty($request['date_to'])) {
                 $base_q->where_raw('t.date BETWEEN ? AND ?', [$request['date_from'], $request['date_to']]);
+            }
+        }
+
+        // filter by sales person
+        if (!empty($request['sales_person'])) {
+            $sales_person_id = (int) $request['sales_person'];
+            if ($sales_person_id > 0) {
+                $base_q->where('t.sales_person_id', $sales_person_id);
             }
         }
 
@@ -1825,6 +1855,11 @@ $(".cdelete").click(function (e) {
         $count_q = clone $base_q;
         $totalFiltered = (int) $count_q->count();
 
+        // --- totals for amount
+        $sum_q = clone $base_q;
+        $totalAmountFiltered = (float) $sum_q->sum('t.subtotal');
+        $totalAmountAll = (float) ORM::for_table('sys_invoices')->sum('subtotal');
+
         // --- data query (clone, apply ordering and pagination)
         $data_q = clone $base_q;
         $data_q->order_by_expr("$order_col $order_dir");
@@ -1847,6 +1882,7 @@ $(".cdelete").click(function (e) {
 
             // created by fallback
             $created_by = $r['created_by_name'] ?: get_type_by_id('sys_users', 'id', $r['created_by'], 'fullname');
+            $sales_person = $r['sales_person_name'] ?: get_type_by_id('sys_users', 'id', $r['sales_person_id'], 'fullname') ?: $created_by;
 
             $manage_html = '';
             // you can conditionally show edit/delete based on $r['status'] or permissions
@@ -1869,7 +1905,7 @@ $(".cdelete").click(function (e) {
                 htmlspecialchars($r['status'], ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($r['delivery_status'], ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($created_by, ENT_QUOTES, 'UTF-8'),
-                !empty($r['updated_at']) ? date('Y-m-d H:i A', $r['updated_at']) : '',
+                htmlspecialchars($sales_person, ENT_QUOTES, 'UTF-8'),
                 !empty($r['created_at']) ? date('Y-m-d H:i A', $r['created_at']) : '',
                 $manage_html
             ];
@@ -1880,7 +1916,9 @@ $(".cdelete").click(function (e) {
             'draw' => intval($request['draw'] ?? 0),
             'recordsTotal' => intval($totalData),
             'recordsFiltered' => intval($totalFiltered),
-            'data' => $data
+            'data' => $data,
+            'total_amount_filtered' => number_format($totalAmountFiltered, 2, '.', ''),
+            'total_amount_all' => number_format($totalAmountAll, 2, '.', '')
         ];
 
         header('Content-Type: application/json; charset=utf-8');
@@ -2383,11 +2421,13 @@ $inv_prefix = '';
 								'nd' 							=> $nd,
 								'taxamt' 					=> Finance::amount_fix($taxTotal),
 								//others
-								'paymentmethod'		=> '',
+                                'paymentmethod'		=> '',
 								'currency' 				=> $currency,
 								'currency_symbol'	=> $currency_symbol,
                                 'currency_rate' 	=> $currency_rate,
-                                'created_by'      => $sales_person_id,
+                                // preserve original creator; if missing set to current user
+                                'created_by'      => !empty($d['created_by']) ? $d['created_by'] : (int) $user->id,
+                                'sales_person_id' => $sales_person_id,
                                 'd_measure'         => $d_measure,
                                 'additional_imgs' => json_encode($img_array),
                                 'updated_at' => time()
