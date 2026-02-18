@@ -1890,8 +1890,10 @@ $(".cdelete").click(function (e) {
             if ($r['status'] === 'Unpaid') {
                 $manage_html .= '<a href="'. U .'invoices/edit/'. $r['id'] .'/" class="btn btn-info btn-xs"><i class="fa fa-pencil"></i> '.$_L['Edit'].'</a> ';
             }
+            if($user->roleid == 0) {
             if (empty($r['sale_trans_code'])) {
                 $manage_html .= '<a href="#" class="btn btn-danger btn-xs cdelete" id="iid'.$r['id'].'"><i class="fa fa-trash"></i> '.$_L['Delete'].'</a>';
+            }
             }
 
             $data[] = [
