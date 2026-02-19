@@ -10,7 +10,22 @@ $(document).ready(function () {
 	var $modal = $('#ajax-modal');
   var opt = get_tax_opt();
 	var i;
-	
+
+	function updateBranchId() {
+		let branchId = $('#company').find(':selected').data('branch');
+		$('#company_branch_id').val(branchId);
+	}
+
+	function refreshSalesPersons(branchId, selectedId) {
+		var currentSelected = selectedId || $('#sales_person').val() || '';
+		$.post(_url + 'invoices/get-branch-sales-persons/', {
+			branch_id: branchId,
+			selected: currentSelected
+		}).done(function (html) {
+			$('#sales_person').html(html);
+		});
+	}
+
 /* 	for(i=0; i < rowNum; i++){
 		call_select2("i_"+i);
 		console.log(i);
@@ -166,6 +181,15 @@ $(document).ready(function () {
     }).on("change", function(e) {
         update_address();
     });
+
+	// Sync branch & sales person list on load and change
+	updateBranchId();
+	refreshSalesPersons($('#company').find(':selected').data('branch') || $('#company').val() || 'all', $('#sales_person').val());
+	$('#company').on('change', function () {
+		updateBranchId();
+		var branchId = $(this).find(':selected').data('branch') || $(this).val() || 'all';
+		refreshSalesPersons(branchId);
+	});
 
 
     item_remove.on('click', function(){

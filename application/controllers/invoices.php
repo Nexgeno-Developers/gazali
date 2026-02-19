@@ -1,14 +1,5 @@
 <?php 
 
-use Asset;
-use Finance;
-use Model;
-use ORM;
-use Paginator;
-use Event;
-use User;
-use Validator;
-
 _auth();
 $ui->assign('_application_menu', 'dsfds');
 $ui->assign('_st', $_L['Invoices']);
@@ -99,14 +90,35 @@ switch ($action) {
         $ui->assign('comp', $comp);
         $ui->assign('idate', date('Y-m-d'));
 
+        // Pick the branch tied to the currently selected company (defaults to the user's branch)
+        $selected_branch_id = $user->branch_id ?: (!empty($comp) ? (int) $comp[0]['id'] : 0);
+
         $sales_users_q = ORM::for_table('sys_users')
             ->select('id')
             ->select('fullname')
             ->select('username')
             ->order_by_asc('fullname');
-        if ((int) $user->roleid !== 0) {
+
+        if ((int) $user->roleid === 0) {
+            if ($selected_branch_id) {
+                if ((int) $selected_branch_id === (int) $user->branch_id) {
+                    // Super admin's own branch: include branch users + self
+                    $sales_users_q->where_raw('(branch_id = ? OR id = ?)', [$selected_branch_id, $user->id]);
+                } else {
+                    // Different branch: only that branch's users, exclude super admin
+                    $sales_users_q->where('branch_id', $selected_branch_id);
+                    $sales_users_q->where_not_equal('id', $user->id);
+                }
+            } else {
+                // No branch selected yet: show only self
+                $sales_users_q->where('id', $user->id);
+            }
+        } else {
+            // Non-super admin: only own branch, never show super admin
             $sales_users_q->where('branch_id', $user->branch_id);
+            $sales_users_q->where_not_equal('roleid', 0);
         }
+
         $ui->assign('sales_users', $sales_users_q->find_array());
         $ui->assign('selected_sales_person', (int) $user['id']);
 
@@ -206,14 +218,30 @@ $(document).ready(function () {
             $ui->assign('i', $d);
 						$comp = ORM::for_table('sys_accounts')->select('id')->select('account')->order_by_asc('id')->find_many();
 						$ui->assign('comp', $comp);
+            $selected_branch_id = !empty($d['company_id']) ? (int) $d['company_id'] : ($user->branch_id ?: 0);
+
             $sales_users_q = ORM::for_table('sys_users')
                 ->select('id')
                 ->select('fullname')
                 ->select('username')
                 ->order_by_asc('fullname');
-            if ((int) $user->roleid !== 0) {
+
+            if ((int) $user->roleid === 0) {
+                if ($selected_branch_id) {
+                    if ((int) $selected_branch_id === (int) $user->branch_id) {
+                        $sales_users_q->where_raw('(branch_id = ? OR id = ?)', [$selected_branch_id, $user->id]);
+                    } else {
+                        $sales_users_q->where('branch_id', $selected_branch_id);
+                        $sales_users_q->where_not_equal('id', $user->id);
+                    }
+                } else {
+                    $sales_users_q->where('id', $user->id);
+                }
+            } else {
                 $sales_users_q->where('branch_id', $user->branch_id);
+                $sales_users_q->where_not_equal('roleid', 0);
             }
+
             $ui->assign('sales_users', $sales_users_q->find_array());
             $ui->assign('selected_sales_person', !empty($d['sales_person_id']) ? (int) $d['sales_person_id'] : (!empty($d['created_by']) ? (int) $d['created_by'] : (int) $user['id']));
             $items = ORM::for_table('sys_invoiceitems')->where('invoiceid', $id)->order_by_asc('id')->find_many();
@@ -557,15 +585,30 @@ $(document).ready(function () {
         Event::trigger('invoices/add-post/');
 /* 				var_dump($_POST);exit; */
         $cid = _post('cid');
-				$company = _post('company');
+        $company = _post('company');
+        $company_branch_id = _post('company_branch_id');
         $sales_person_id = (int) _post('sales_person');
         if ($sales_person_id <= 0) {
             $sales_person_id = (int) $user['id'];
         }
 
         $sales_person_q = ORM::for_table('sys_users')->select('id')->where('id', $sales_person_id);
-        if ((int) $user->roleid !== 0) {
+        if ((int) $user->roleid === 0) {
+            $allow_self = ((int) $company_branch_id === (int) $user->branch_id);
+            if ($sales_person_id === (int) $user->id) {
+                // self is allowed only when branch matches
+                if (!$allow_self) {
+                    $sales_person_q->where_raw('0=1');
+                }
+            } else {
+                if (!empty($company_branch_id)) {
+                    $sales_person_q->where('branch_id', $company_branch_id);
+                }
+                $sales_person_q->where_not_equal('id', $user->id);
+            }
+        } else {
             $sales_person_q->where('branch_id', $user->branch_id);
+            $sales_person_q->where_not_equal('roleid', 0);
         }
         $sales_person = $sales_person_q->find_one();
         if (!$sales_person) {
@@ -934,8 +977,21 @@ $(document).ready(function () {
         }
 
         $sales_person_q = ORM::for_table('sys_users')->select('id')->where('id', $sales_person_id);
-        if ((int) $user->roleid !== 0) {
+        if ((int) $user->roleid === 0) {
+            $allow_self = ((int) $company_branch_id === (int) $user->branch_id);
+            if ($sales_person_id === (int) $user->id) {
+                if (!$allow_self) {
+                    $sales_person_q->where_raw('0=1');
+                }
+            } else {
+                if (!empty($company_branch_id)) {
+                    $sales_person_q->where('branch_id', $company_branch_id);
+                }
+                $sales_person_q->where_not_equal('id', $user->id);
+            }
+        } else {
             $sales_person_q->where('branch_id', $user->branch_id);
+            $sales_person_q->where_not_equal('roleid', 0);
         }
         $sales_person = $sales_person_q->find_one();
         if (!$sales_person) {
@@ -2146,14 +2202,28 @@ $(".cdelete").click(function (e) {
         $its = strtotime($idate);
         $duedate = _post('duedate');
         $company = _post('company');
+        $company_branch_id = _post('company_branch_id');
         $sales_person_id = (int) _post('sales_person');
         if ($sales_person_id <= 0) {
             $sales_person_id = (int) $user['id'];
         }
 
         $sales_person_q = ORM::for_table('sys_users')->select('id')->where('id', $sales_person_id);
-        if ((int) $user->roleid !== 0) {
+        if ((int) $user->roleid === 0) {
+            $allow_self = ((int) $company_branch_id === (int) $user->branch_id);
+            if ($sales_person_id === (int) $user->id) {
+                if (!$allow_self) {
+                    $sales_person_q->where_raw('0=1');
+                }
+            } else {
+                if (!empty($company_branch_id)) {
+                    $sales_person_q->where('branch_id', $company_branch_id);
+                }
+                $sales_person_q->where_not_equal('id', $user->id);
+            }
+        } else {
             $sales_person_q->where('branch_id', $user->branch_id);
+            $sales_person_q->where_not_equal('roleid', 0);
         }
         $sales_person = $sales_person_q->find_one();
         if (!$sales_person) {
@@ -2377,21 +2447,20 @@ $inv_prefix = '';
 
             //save sample image
             $img_array = array();
-
-            for($i=0; $i<count($_POST['existing_additional_imgs']); $i++ )
-            {
-                $img_array[] = $_POST['existing_additional_imgs'][$i];              
+            $existing_imgs = isset($_POST['existing_additional_imgs']) && is_array($_POST['existing_additional_imgs']) ? $_POST['existing_additional_imgs'] : [];
+            foreach ($existing_imgs as $img) {
+                $img_array[] = $img;
             }
 
-            for($i=0; $i<count($_FILES['additional_imgs']); $i++ )
-            {
-                if($_FILES['additional_imgs']["name"][$i])
-                {
-                    $filename = 'ui/lib/imgs/additional-img/'.time().$i.'.jpg';
-                    $img_array[] = $filename;
-                    move_uploaded_file($_FILES['additional_imgs']["tmp_name"][$i], $filename);
-                }                
-            }            
+            if (isset($_FILES['additional_imgs']['name']) && is_array($_FILES['additional_imgs']['name'])) {
+                for ($i = 0; $i < count($_FILES['additional_imgs']['name']); $i++) {
+                    if (!empty($_FILES['additional_imgs']["name"][$i])) {
+                        $filename = 'ui/lib/imgs/additional-img/' . time() . $i . '.jpg';
+                        $img_array[] = $filename;
+                        move_uploaded_file($_FILES['additional_imgs']["tmp_name"][$i], $filename);
+                    }
+                }
+            }
 						
 						//update to sys_invoices
             $d = ORM::for_table('sys_invoices')->find_one($iid);
@@ -2485,7 +2554,6 @@ $inv_prefix = '';
                                         $stock_qty = ($unit === 'tola') ? tola_to_grams($d->qty) : $d->qty;
                                         stock_record($d->product_id, $stock_qty, 'debit', $d->invoiceid , '', '', '', $line_branch_id, ''); //newly added
                                     }
-                                    $d->branch_id = $line_branch_id;
                                     if(!empty($_POST['pimg'][$i]))
                                     {
                                         $get_img = file_get_contents($_SERVER['DOCUMENT_ROOT'].'/'.$_POST['pimg'][$i]);
@@ -4691,6 +4759,49 @@ $(".cdelete").click(function (e) {
 
 
         break;
+
+        case 'get-branch-sales-persons':
+
+            Event::trigger('invoices/get-branch-sales-persons/');
+
+            $branch_id   = _post('branch_id');
+            $selected_id = (int) _post('selected');
+
+            $sales_users_q = ORM::for_table('sys_users')
+                ->select('id')
+                ->select('fullname')
+                ->select('username')
+                ->order_by_asc('fullname');
+
+            if ((int) $user->roleid === 0) {
+                if (!empty($branch_id) && $branch_id !== 'all') {
+                    if ((int) $branch_id === (int) $user->branch_id) {
+                        $sales_users_q->where_raw('(branch_id = ? OR id = ?)', [$branch_id, $user->id]);
+                    } else {
+                        $sales_users_q->where('branch_id', $branch_id);
+                        $sales_users_q->where_not_equal('id', $user->id);
+                    }
+                } else {
+                    $sales_users_q->where('id', $user->id);
+                }
+            } else {
+                if (!empty($branch_id) && $branch_id !== 'all') {
+                    $sales_users_q->where('branch_id', $branch_id);
+                }
+                $sales_users_q->where_not_equal('roleid', 0);
+                $sales_users_q->where('branch_id', $user->branch_id);
+            }
+
+            $options = '';
+            foreach ($sales_users_q->find_array() as $su) {
+                $name = !empty($su['fullname']) ? $su['fullname'] : $su['username'];
+                $sel  = ($selected_id === (int) $su['id']) ? ' selected' : '';
+                $options .= '<option value="' . $su['id'] . '"' . $sel . '>' . $name . '</option>';
+            }
+
+            echo $options;
+
+            break;
 
 
         case 'get-designs-by-clothid':

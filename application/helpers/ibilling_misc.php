@@ -1,6 +1,4 @@
 <?php 
-
-use ORM;
 require_once dirname(__DIR__, 2) . '/system_log.php';
 
 function get_client_ip(){

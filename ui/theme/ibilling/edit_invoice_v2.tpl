@@ -419,6 +419,8 @@ input[type=number]::-webkit-outer-spin-button {
 								{/if}
 							</select>
 						</div>
+						<!-- hidden branch id (used for stock/sales person scoping) -->
+						<input type="hidden" name="company_branch_id" id="company_branch_id" value="{$d.company_id|default:''}">
 						<div class="form-group">
 							<label for="sales_person">Sales person</label>
 							<select id="sales_person" name="sales_person" class="form-control" required>
