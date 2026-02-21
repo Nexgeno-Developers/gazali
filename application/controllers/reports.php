@@ -1021,6 +1021,17 @@ var dchart = c3.generate({
             $total_emp_expense = $tot ? (float)$tot->total_emp_expense : 0.0;
             $total_profit      = $tot ? (float)$tot->total_profit      : 0.0;
 
+            // subtract credit notes to show net sales
+            $cn_q = ORM::for_table('sys_credit_notes');
+            if ($branch_id) {
+                $cn_q->where('branch_id', $branch_id);
+            }
+            if ($date_from && $date_to) {
+                $cn_q->where_gte('date', $date_from)->where_lte('date', $date_to);
+            }
+            $credit_note_total = $cn_q->sum('total') ?: 0.0;
+            $total_invoice = $total_invoice - $credit_note_total;
+
             // build DataTable data
             $data = [];
             $sr = $start + 1;

@@ -620,10 +620,17 @@ echo '
         if (!empty($branch_id) && $branch_id !== 'all') {
             $invoice_created_q->where('company_id', $branch_id);
             $invoice_received_q->where('company_id', $branch_id);
+            $credit_note_q = ORM::for_table('sys_credit_notes')->where('branch_id', $branch_id);
+        } else {
+            $credit_note_q = ORM::for_table('sys_credit_notes');
         }
 
         $invoice_created_amount = $invoice_created_q->sum('total');
-        $invoice_created_amount = $invoice_created_amount ?: '0.00';
+        $invoice_created_amount = $invoice_created_amount ?: 0;
+        $credit_note_total = $credit_note_q->sum('total');
+        $credit_note_total = $credit_note_total ?: 0;
+        $invoice_created_amount = $invoice_created_amount - $credit_note_total;
+        $invoice_created_amount = number_format((float)$invoice_created_amount, 2, '.', '');
         $ui->assign('invoice_created_amount', $invoice_created_amount);
 
         $invoice_received_amount = $invoice_received_q->sum('credit');

@@ -19,6 +19,9 @@
 				<h5>{$_L['Invoice']} - {if $d['cn'] neq ''} {$d['cn']} {else} {$d['invoicenum']} {/if}</h5>
 				<input type="hidden" name="iid" value="{$d['id']}" id="iid">
 				<div class="btn-group  pull-right" role="group" aria-label="...">
+                    {if has_access($user->roleid,'sales')}
+                    <a href="{$_url}creditnotes/add/{$d['id']}/" class="btn btn-warning btn-sm" style="margin-right:4px;"><i class="fa fa-undo"></i> Create Return Invoice</a>
+                    {/if}
 					<!--<div class="btn-group" role="group">
 						<button type="button" class="btn  btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
 								<i class="fa fa-envelope-o"></i>  {$_L['Send Email']}

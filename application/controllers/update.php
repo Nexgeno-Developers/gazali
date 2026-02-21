@@ -682,6 +682,88 @@ if(add_option('contentAnimation','animated fadeIn')){
 
 }
 
+// =============================== Return Invoice (Sales Return) ===============================
+
+// Create credit note master table
+$d = ORM::for_table('crm_accounts')->raw_query("SHOW TABLES LIKE 'sys_credit_notes'")->find_one();
+
+if(!$d){
+
+    $t = new Schema('sys_credit_notes');
+    $t->add('userid','int',11,0);
+    $t->add('account','varchar',200);
+    $t->add('creditnotenum','varchar',100);
+    $t->add('original_invoice_id','int',11,0);
+    $t->add('date','date');
+    $t->add('subtotal','decimal','18,2','0.00');
+    $t->add('discount','decimal','18,2','0.00');
+    $t->add('taxamt','decimal','18,2','0.00');
+    $t->add('total','decimal','18,2','0.00');
+    $t->add('status','varchar',50,'Open');
+    $t->add('notes');
+    // currency fields
+    $t->add('currency','int',11,0);
+    $t->add('currency_symbol','varchar',10);
+    $t->add('currency_prefix','varchar',10);
+    $t->add('currency_suffix','varchar',10);
+    $t->add('currency_rate','decimal','11,4','1.0000');
+    // branch/company + audit
+    $t->add('company_id','int',11,0);
+    $t->add('branch_id','int',11,0);
+    $t->add('created_by','int',11,0);
+    $t->add('created_at','datetime');
+    $t->add('updated_at','datetime');
+    $t->save();
+
+    $msg .= 'Created table sys_credit_notes
+';
+}
+
+// Create credit note items table
+$d = ORM::for_table('crm_accounts')->raw_query("SHOW TABLES LIKE 'sys_creditnoteitems'")->find_one();
+
+if(!$d){
+
+    $t = new Schema('sys_creditnoteitems');
+    $t->add('creditnoteid','int',11,0);
+    $t->add('userid','int',11,0);
+    $t->add('itemcode','text');
+    $t->add('description','text');
+    $t->add('qty','decimal','18,2','0.00');
+    $t->add('amount','decimal','18,2','0.00');
+    $t->add('taxrate','decimal','10,2','0.00');
+    $t->add('taxamount','decimal','18,2','0.00');
+    $t->add('total','decimal','18,2','0.00');
+    $t->add('product_id','int',11,0);
+    $t->add('branch_id','int',11,0);
+    $t->add('unit','varchar',20);
+    $t->add('invoice_item_id','int',11,0);
+    $t->add('tax_id','int',11,0);
+    $t->add('item_type','varchar',50);
+    $t->add('created_at','datetime');
+    $t->add('updated_at','datetime');
+    $t->save();
+
+    $msg .= 'Created table sys_creditnoteitems
+';
+}
+
+// Add link column to transactions for refunds
+$d = ORM::for_table('sys_transactions')->raw_query("SHOW COLUMNS FROM sys_transactions LIKE 'creditnote_id'")->find_one();
+if(!$d){
+    ORM::execute("ALTER TABLE `sys_transactions` ADD `creditnote_id` INT(11) NOT NULL DEFAULT '0' AFTER `iid`");
+    $msg .= 'Added creditnote_id column to sys_transactions
+';
+}
+
+// Add invoice_item_id to creditnoteitems if missing
+$d = ORM::for_table('sys_creditnoteitems')->raw_query("SHOW COLUMNS FROM sys_creditnoteitems LIKE 'invoice_item_id'")->find_one();
+if(!$d){
+    ORM::execute("ALTER TABLE `sys_creditnoteitems` ADD `invoice_item_id` INT(11) NOT NULL DEFAULT '0' AFTER `unit`");
+    $msg .= 'Added invoice_item_id column to sys_creditnoteitems
+';
+}
+
 // Build 4530
 
 //$d = ORM::for_table('crm_accounts')->raw_query("SHOW TABLES LIKE 'sys_todo'")->find_one();

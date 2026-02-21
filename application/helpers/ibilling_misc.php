@@ -1586,3 +1586,44 @@ function currency_prefix()
 
     return $code . ' ';
 }
+
+/**
+ * Compute customer balance as Invoices - Payments - Return Invoice.
+ */
+function calculate_customer_balance($customer_id)
+{
+    if(!$customer_id){
+        return 0.00;
+    }
+
+    $invoice_total = ORM::for_table('sys_invoices')->where('userid', $customer_id)->sum('total');
+    $invoice_total = $invoice_total ?: 0;
+
+    $payments_total = ORM::for_table('sys_transactions')
+        ->where('type','Income')
+        ->where_any_is(array(
+            array('payerid' => $customer_id),
+            array('payeeid' => $customer_id)
+        ))
+        ->sum('cr');
+    $payments_total = $payments_total ?: 0;
+
+    $credit_total = ORM::for_table('sys_credit_notes')->where('userid', $customer_id)->sum('total');
+    $credit_total = $credit_total ?: 0;
+
+    return ($invoice_total - $payments_total - $credit_total);
+}
+
+/**
+ * Persist the calculated balance back to crm_accounts.balance.
+ */
+function sync_customer_balance($customer_id)
+{
+    $balance = calculate_customer_balance($customer_id);
+    $c = ORM::for_table('crm_accounts')->find_one($customer_id);
+    if($c){
+        $c->balance = $balance;
+        $c->save();
+    }
+    return $balance;
+}

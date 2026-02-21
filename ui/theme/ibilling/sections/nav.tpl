@@ -150,6 +150,8 @@
 
                         
                         <li><a href="{$_url}invoices/add/">{$_L['Add Invoice']}</a></li>
+
+                        <li><a href="{$_url}creditnotes/list/">Return Invoices</a></li>
                         
                         <!--<li><a href="{$_url}invoices/list-proforma/filter/">Proforma</a></li>
                         
