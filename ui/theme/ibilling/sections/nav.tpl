@@ -49,12 +49,6 @@
                     <li><a href="{$_url}contacts/list/">List Contacts</a></li>
                 {/if}
 
-                {* Category submenu *}
-                {if has_access($user->roleid,'contact_category')}
-                    <li><a href="{$_url}contacts/add-category-employee/">Add Category</a></li>
-                    <li><a href="{$_url}contacts/category-employee-list/">List Category</a></li>
-                {/if}
-
                 {foreach $sub_menu_admin['crm'] as $sm_crm}
                     {$sm_crm}
                 {/foreach}
