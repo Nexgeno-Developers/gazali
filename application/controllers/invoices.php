@@ -245,15 +245,15 @@ $(document).ready(function () {
             $ui->assign('sales_users', $sales_users_q->find_array());
             $ui->assign('selected_sales_person', !empty($d['sales_person_id']) ? (int) $d['sales_person_id'] : (!empty($d['created_by']) ? (int) $d['created_by'] : (int) $user['id']));
             $items = ORM::for_table('sys_invoiceitems')->where('invoiceid', $id)->order_by_asc('id')->find_many();
-            // Enrich items with product_stock_type for UI (qty should hide Gram/Tola)
+            // Enrich items with product_stock_type for UI (pieces should hide Gram/Tola)
             foreach ($items as $itm) {
                 if ($itm['item_type'] === 'product' && !empty($itm['product_id'])) {
                     $prod = ORM::for_table('sys_items')->find_one($itm['product_id']);
                     if ($prod) {
                         $itm->product_stock_type = $prod['product_stock_type'];
-                        if (strtolower((string) $prod['product_stock_type']) === 'qty' && strtolower((string) $itm['unit']) !== 'qty') {
-                            // Default to qty to avoid showing radios on edit for qty-only products
-                            $itm->unit = 'qty';
+                        if (strtolower((string) $prod['product_stock_type']) === 'pieces' && strtolower((string) $itm['unit']) !== 'pieces') {
+                            // Default to pieces to avoid showing radios on edit for pieces-only products
+                            $itm->unit = 'pieces';
                         }
                     }
                 }
@@ -817,8 +817,8 @@ $(document).ready(function () {
 									$posted_unit = strtolower(trim($_POST['unit'][$i]));
 									if ($posted_unit === 'tola') {
 										$unit = 'tola';
-									} elseif ($posted_unit === 'qty') {
-										$unit = 'qty';
+									} elseif ($posted_unit === 'pieces') {
+										$unit = 'pieces';
 									}
 								}
 								$d->unit = $unit;
@@ -1344,8 +1344,8 @@ $(document).ready(function () {
 										$posted_unit = strtolower(trim($_POST['unit'][$i]));
 										if ($posted_unit === 'tola') {
 											$unit = 'tola';
-										} elseif ($posted_unit === 'qty') {
-											$unit = 'qty';
+										} elseif ($posted_unit === 'pieces') {
+											$unit = 'pieces';
 										}
 									}
 								$d->unit = $unit;
@@ -2521,8 +2521,8 @@ $inv_prefix = '';
 										$posted_unit = strtolower(trim($_POST['unit'][$i]));
 										if ($posted_unit === 'tola') {
 											$unit = 'tola';
-										} elseif ($posted_unit === 'qty') {
-											$unit = 'qty';
+										} elseif ($posted_unit === 'pieces') {
+											$unit = 'pieces';
 										}
 									}
 									$d->unit = $unit;
@@ -4869,10 +4869,10 @@ $(".cdelete").click(function (e) {
                 $tola_checked = ($stockType === 'tola') ? 'checked' : '';
                 $unit_value = ($stockType === 'tola') ? 'tola' : 'gram';
 
-                if($stockType === 'qty'){
+                if($stockType === 'pieces'){
                     $unit_controls = '
-                        <span class="unit-label">Qty</span>
-                        <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                        <span class="unit-label">Pieces</span>
+                        <input type="hidden" class="unit-value" name="unit[]" value="pieces">
                     ';
                 }
                 else{
@@ -4939,10 +4939,10 @@ $(".cdelete").click(function (e) {
                 $tola_checked = ($stockType === 'tola') ? 'checked' : '';
                 $unit_value = ($stockType === 'tola') ? 'tola' : 'gram';
 
-                if($stockType === 'qty'){
+                if($stockType === 'pieces'){
                     $unit_controls = '
-                        <span class="unit-label">Qty</span>
-                        <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                        <span class="unit-label">Pieces</span>
+                        <input type="hidden" class="unit-value" name="unit[]" value="pieces">
                     ';
                 }
                 else{
@@ -5053,9 +5053,9 @@ $(".cdelete").click(function (e) {
                 $tola_checked = ($stockType === 'tola') ? 'checked' : '';
                 $unit_value = ($stockType === 'tola') ? 'tola' : 'gram';
 
-                if($stockType === 'qty'){
+                if($stockType === 'pieces'){
                     $unit_controls = '
-                        <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                        <input type="hidden" class="unit-value" name="unit[]" value="pieces">
                     ';
                     // $unit_controls = '
                     //     <span class="unit-label">Qty</span>
@@ -5179,9 +5179,9 @@ $(".cdelete").click(function (e) {
                 $tola_checked = ($stockType === 'tola') ? 'checked' : '';
                 $unit_value = ($stockType === 'tola') ? 'tola' : 'gram';
 
-                if($stockType === 'qty'){
+                if($stockType === 'pieces'){
                     $unit_controls = '
-                        <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                        <input type="hidden" class="unit-value" name="unit[]" value="pieces">
                     ';
                     // $unit_controls = '
                     //     <span class="unit-label">Qty</span>

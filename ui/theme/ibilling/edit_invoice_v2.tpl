@@ -233,9 +233,9 @@ input[type=number]::-webkit-outer-spin-button {
 										<td><input type="text" class="form-control items" id="i_{$idi++}" name="desc[]" value="{$item['description']}" /> </td>
 										<td><input type="number" class="form-control qty" value="{if ($_c['dec_point']) eq ','}{$item['qty']|replace:'.':','}{else}{$item['qty']}{/if}" name="qty[]"></td>
 										<td>
-                                            {if (isset($item['unit']) && $item['unit'] eq 'qty') || (isset($item['product_stock_type']) && $item['product_stock_type'] eq 'qty')}
-                                                <span class="unit-label">Qty</span>
-                                                <input type="hidden" class="unit-value" name="unit[]" value="qty">
+                                            {if (isset($item['unit']) && $item['unit'] eq 'pieces') || (isset($item['product_stock_type']) && $item['product_stock_type'] eq 'pieces')}
+                                                <span class="unit-label">Pieces</span>
+                                                <input type="hidden" class="unit-value" name="unit[]" value="pieces">
                                             {else}
 											    <label style="margin-right:8px;">
 												    <input type="radio" class="unit-radio" name="unit_radio_{$item['id']}" value="gram" {if !isset($item['unit']) || $item['unit'] eq '' || $item['unit'] eq 'gram'}checked{/if}> Gram

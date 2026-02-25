@@ -64,8 +64,8 @@
 			</div>
 			<div class="col-lg-3">
 					<select name="product_stock_type" class="form-control">
-						<option value="qty" {if $d['product_stock_type'] eq 'qty'} selected {/if}>Qty</option>
-						<option value="gram" {if $d['product_stock_type'] eq 'gram'} selected {/if}>Gram (1 tola ≈ 11.66 g)</option>
+						<option value="pieces" {if $d['product_stock_type'] eq 'pieces'} selected {/if}>Pieces</option>
+						<option value="gram" {if $d['product_stock_type'] eq 'gram'} selected {/if}>Gram (1 tola ≈ 12 g)</option>
 					</select>				
 				<!--<input type="text" name="product_stock_type" value="{$d['product_stock_type']}" class="form-control" autocomplete="off" placeholder="e.g : kg, meter, packet">-->
 			</div>
@@ -96,7 +96,7 @@
 {literal}
 <script>
 (function(){
-	const gramsPerTola = 11.66;
+	const gramsPerTola = 12;
 	const $form = $('#edit_form');
 	const $stock = $form.find('input[name="product_stock"]');
 	const $unit = $form.find('select[name="product_stock_type"]');

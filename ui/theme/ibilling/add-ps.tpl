@@ -94,8 +94,8 @@
                      </div>
                      <div class="col-lg-3">
                         <select name="product_stock_type" class="form-control">
-                            <option value="qty">Qty</option>
-                            <option value="gram">Gram (1 tola ≈ 11.66 g)</option>
+                            <option value="pieces">Pieces</option>
+                            <option value="gram">Gram (1 tola ≈ 12 g)</option>
                         </select>
                         <!--<input type="text" name="product_stock_type" class="form-control" autocomplete="off" placeholder="e.g : kg, meter, packet">-->
                      </div>
@@ -170,7 +170,7 @@ function get_category(val)
 }
 
 $(document).ready(function(){
-        const gramsPerTola = 11.66;
+        const gramsPerTola = 12;
         const $stockInput = $('input[name=\"product_stock\"]');
         const $unitSelect = $('select[name=\"product_stock_type\"]');
         const $tolaHint = $('#stockTolaHint');

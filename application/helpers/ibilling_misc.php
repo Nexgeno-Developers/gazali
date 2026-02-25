@@ -1511,14 +1511,14 @@ function update_collection_status($collection_id) {
 if (!function_exists('grams_to_tola')) {
     function grams_to_tola($grams)
     {
-        return $grams / 11.66;
+        return $grams / 12;
     }
 }
 
 if (!function_exists('tola_to_grams')) {
     function tola_to_grams($tola)
     {
-        return $tola * 11.66;
+        return $tola * 12;
     }
 }
 

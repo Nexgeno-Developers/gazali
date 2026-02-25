@@ -117,7 +117,7 @@ $(function(){
         $('.select2').select2();
     }
     function gramsToTola(grams){
-        return grams / 11.66;
+        return grams / 12;
     }
 
     function renderStockWithTola(tableApi){

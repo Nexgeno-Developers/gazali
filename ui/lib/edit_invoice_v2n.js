@@ -375,8 +375,8 @@ $(document).ready(function () {
 							var tolaChecked = (stockType === 'tola') ? 'checked' : '';
 							var unitValue = (stockType === 'tola') ? 'tola' : 'gram';
 							var unitHtml;
-							if (stockType === 'qty') {
-								unitHtml = '<input type="hidden" class="unit-value" name="unit[]" value="qty">';
+							if (stockType === 'pieces') {
+								unitHtml = '<input type="hidden" class="unit-value" name="unit[]" value="pieces">';
 							} else {
 								unitHtml = '<label style="margin-right:8px;"><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="gram" ' + gramChecked + '> Gram</label><label><input type="radio" class="unit-radio" name="unit_radio_' + rowNum + '" value="tola" ' + tolaChecked + '> Tola</label><input type="hidden" class="unit-value" name="unit[]" value="' + unitValue + '">';
 							}
