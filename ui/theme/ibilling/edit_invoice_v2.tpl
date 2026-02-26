@@ -10,6 +10,10 @@ input[type=number]::-webkit-outer-spin-button {
 .hide{
 	display: none;
 }
+.invoice-table th:nth-child(4),
+.invoice-table td:nth-child(4){
+    display:none !important;
+}
 </style>
 <div class="row" id="ibox_form">
 	<form id="invform" method="post">

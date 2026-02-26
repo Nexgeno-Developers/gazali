@@ -138,67 +138,10 @@ function validateGiftBoxComponents($scope){
   return { valid: true, message: '' };
 }
 
-function rebuildCategorySelects(categoryData){
-  $('.component-block').each(function(){
-    var $block = $(this);
-    var cat = String($block.data('cat') || '');
-    var label = String($block.data('label') || cat || 'Item');
-    var items = (categoryData && categoryData[cat]) ? categoryData[cat] : [];
-    var options = '<option value="">--Select ' + escapeHtml(label) + '--</option>';
-
-    $.each(items, function(_, item){
-      options += '<option value="' + item.id + '">' + escapeHtml(item.name) + '</option>';
-    });
-
-    $block.find('select').each(function(){
-      var $select = $(this);
-      if($select.data('select2')){
-        $select.select2('destroy');
-      }
-      $select.html(options).val('');
-      $select.select2();
-    });
-
-    // Clear qtys when branch changes to avoid mixed-branch entries.
-    $block.find('input[name^="component_qty"]').val('');
-  });
-}
-
-function loadBranchProducts(branchId){
-  var _url = $("#_url").val();
-  if(!branchId){
-    rebuildCategorySelects({});
-    return;
-  }
-
-  $.ajax({
-    url: _url + 'manage/branch-category-items/',
-    type: 'GET',
-    dataType: 'json',
-    data: { branch_id: branchId },
-    success: function(resp){
-      if(resp && resp.success){
-        rebuildCategorySelects(resp.categories || {});
-      } else {
-        rebuildCategorySelects({});
-      }
-    },
-    error: function(){
-      rebuildCategorySelects({});
-    }
-  });
-}
-
 $(document).ready(function () {
     $(".progress").hide();
     $("#emsg").hide();
     $('.select2').select2();
-
-    $('#branch_id').on('change', function(){
-      loadBranchProducts($(this).val());
-    });
-
-    loadBranchProducts($('#branch_id').val());
 
     $("#submit").click(function (event) {
         event.preventDefault(); 
