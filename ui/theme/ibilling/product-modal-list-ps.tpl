@@ -15,15 +15,6 @@
             get_list(firstCat);
         }
 
-        $('#modal_branch_filter').on('change', function () {
-            var branchId = $(this).val() || 'all';
-            var _url = $('#_url').val();
-            var $modal = $('#ajax-modal');
-
-            $modal.load(_url + 'ps/modal-list/', { branch_id: branchId }, function () {
-                $modal.modal();
-            });
-        });
     });
 
 
@@ -39,19 +30,6 @@
     </div>
 <div class="modal-body select_products_body">
 <div class="modal_heights">
-        <div class="form-group">
-            <label for="modal_branch_filter">Branch</label>
-            <select id="modal_branch_filter" class="form-control">
-                {if $is_super_admin}
-                <option value="all" {if $selected_branch_id eq 'all'}selected{/if}>All Branches</option>
-                {/if}
-                {foreach $branches as $branch}
-                <option value="{$branch.id}" {if $selected_branch_id eq $branch.id}selected{/if}>
-                    {$branch.alias|default:$branch.account}
-                </option>
-                {/foreach}
-            </select>
-        </div>
         <ul class="nav nav-tabs">
           <li class="active"><a data-toggle="tab" href="#Readymade">Readymade</a></li>
           <li><a data-toggle="tab" href="#Customized">Customized</a></li>

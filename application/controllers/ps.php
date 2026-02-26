@@ -1,11 +1,4 @@
 <?php
-
-use Asset;
-use Countries;
-use Finance;
-use ORM;
-use Paginator;
-use User;
 _auth();
 $ui->assign('_application_menu', 'ps');
 $ui->assign('_title', $_L['Products n Services'].'- '. $config['CompanyName']);
@@ -69,50 +62,14 @@ switch ($action) {
         break;*/
 
         case 'modal-list':
-        $requested_branch_id = isset($_REQUEST['branch_id']) ? trim((string) $_REQUEST['branch_id']) : '';
-        $is_super_admin = ((int) $user->roleid === 0);
-        $effective_branch_id = '';
+		
+        $customize = ORM::for_table('sys_items')->where('product_type', 'customize')->order_by_asc('name')->find_many();
+        $ui->assign('p_customize', $customize);    
 
-        if ($is_super_admin) {
-            if ($requested_branch_id !== '' && $requested_branch_id !== 'all') {
-                $effective_branch_id = $requested_branch_id;
-            }
-        } else {
-            $effective_branch_id = !empty($user->branch_id) ? (string) $user->branch_id : '';
-        }
+        $readymade = ORM::for_table('sys_items')->where('product_type', 'readymade')->order_by_asc('name')->find_many();
+        $ui->assign('p_readymade', $readymade);         
 
-        $customize_q = ORM::for_table('sys_items')->where('product_type', 'customize');
-        $readymade_q = ORM::for_table('sys_items')->where('product_type', 'readymade');
-
-        if ($effective_branch_id !== '') {
-            $customize_q->where('branch_id', $effective_branch_id);
-            $readymade_q->where('branch_id', $effective_branch_id);
-        }
-
-        $customize = $customize_q->order_by_asc('name')->find_many();
-        $ui->assign('p_customize', $customize);
-
-        $readymade = $readymade_q->order_by_asc('name')->find_many();
-        $ui->assign('p_readymade', $readymade);
-
-        if ($is_super_admin) {
-            $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
-            $selected_branch_id = ($requested_branch_id === '') ? 'all' : $requested_branch_id;
-        } else {
-            $branches = array();
-            if (!empty($user->branch_id)) {
-                $current_branch = ORM::for_table('sys_accounts')->find_one($user->branch_id);
-                if ($current_branch) {
-                    $branches[] = $current_branch->as_array();
-                }
-            }
-            $selected_branch_id = $effective_branch_id;
-        }
-
-        $ui->assign('branches', $branches);
-        $ui->assign('selected_branch_id', $selected_branch_id);
-        $ui->assign('is_super_admin', $is_super_admin);
-
+  
         $ui->display('product-modal-list-ps.tpl');
               
           break;
@@ -150,7 +107,7 @@ switch ($action) {
 
     case 'p-new':
 
-        if(!has_access($user->roleid, 'products_n_services')) {
+        if(!has_access($user->roleid, 'products_n_services') || $user->roleid != 0) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
 
@@ -182,7 +139,7 @@ switch ($action) {
 
 
     case 's-new':
-        if(!has_access($user->roleid, 'products_n_services')) {
+        if(!has_access($user->roleid, 'products_n_services') || $user->roleid != 0) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
 
@@ -210,9 +167,6 @@ switch ($action) {
         }
         $name = _post('name');
         $sales_price = Finance::amount_fix(_post('sales_price'));
-        if ($sales_price === '') {
-            $sales_price = 0;
-        }
         $item_number = _post('item_number');
         $description = _post('description');
         $product_type = _post('product_type');
@@ -231,11 +185,11 @@ switch ($action) {
             $msg .= 'Item Name is required <br>';
         }
         /*if($_POST['design_id'] == ''){
-            $msg .= 'Gift Box is required for readymade product<br>';
+            $msg .= 'Design is required for readymade product<br>';
         }*/        
-        // if($sales_price == ''){
-        //     $msg .= 'Sale price is required <br>';
-        // }
+        if($sales_price == ''){
+            $msg .= 'Sale price is required <br>';
+        }
         if($purchase_price == ''){
             $msg .= 'Purchase price is required <br>';
         }
@@ -257,7 +211,6 @@ switch ($action) {
         
         if($msg == ''){
             $d = ORM::for_table('sys_items')->create();
-            $d->branch_id = $branch_id;
             $d->name = $name;
             $d->sales_price = $sales_price;
             $d->item_number = $item_number;
@@ -355,24 +308,8 @@ switch ($action) {
             $id  = $routes['2'];
             //$stock = json_decode(product_stock_info($id, true));
             $item = ORM::for_table('sys_items')->find_one($id);
-            // Use the product's own branch from sys_items so history is always branch-specific.
-            $product_branch_id = !empty($item['branch_id']) ? (string) $item['branch_id'] : '';
-
-            $credited_q = ORM::for_table('sys_items_stock')
-                ->where('item_id', $id)
-                ->where('type', 'credit');
-            $debited_q = ORM::for_table('sys_items_stock')
-                ->where('item_id', $id)
-                ->where('type', 'debit');
-
-            // Apply branch filter to both history tables.
-            if ($product_branch_id !== '') {
-                $credited_q->where('branch_id', $product_branch_id);
-                $debited_q->where('branch_id', $product_branch_id);
-            }
-
-            $credited_stock = $credited_q->find_many();
-            $debited_stock = $debited_q->find_many();
+            $credited_stock = ORM::for_table('sys_items_stock')->where('item_id', $id)->where('type', 'credit')->find_many();
+            $debited_stock = ORM::for_table('sys_items_stock')->where('item_id', $id)->where('type', 'debit')->find_many();
 
             $branch_stock = product_stock_info_by_branch($id);
             // Ensure every branch is represented (even if zero stock) for transfer UI
@@ -394,39 +331,27 @@ switch ($action) {
             $ui->assign('item', $item);
             $ui->assign('credited_stock', $credited_stock);
             $ui->assign('debited_stock', $debited_stock);
-            $ui->assign('selected_branch_id', $product_branch_id);
-            $ui->assign('selected_branch_name', get_branch_name($product_branch_id, 'alias'));
-            $ui->assign('selected_branch_stock_count', isset($branch_stock[$product_branch_id]) ? $branch_stock[$product_branch_id] : 0);
 
             // Fetch distinct transfer refs for this item
-            $refs_q = ORM::for_table('sys_items_stock')
+            $refs = ORM::for_table('sys_items_stock')
                 ->select('transfer_ref')
                 ->where('item_id', $id)
                 ->where_not_null('transfer_ref')
                 ->where_not_equal('transfer_ref', '')
                 ->group_by('transfer_ref')
                 ->order_by_desc('transfer_ref') // or order_by_desc('timestamp') if available
-                ->limit(50);
-            // Keep transfer data branch-scoped as well.
-            if ($product_branch_id !== '') {
-                $refs_q->where('branch_id', $product_branch_id);
-            }
-            $refs = $refs_q->find_many();
+                ->limit(50)
+                ->find_many();
 
             $transfer_data = [];
 
             foreach ($refs as $r) {
                 $ref = $r->transfer_ref;
 
-                $query = ORM::for_table('sys_items_stock')
+                // Get all rows for this ref and this item
+                $entries = ORM::for_table('sys_items_stock')
                     ->where('item_id', $id)
-                    ->where('transfer_ref', $ref);
-
-                if ($product_branch_id !== '') {
-                    $query->where('branch_id', $product_branch_id);
-                }
-
-                $entries = $query
+                    ->where('transfer_ref', $ref)
                     ->order_by_asc('id')
                     ->find_many();
 
@@ -580,16 +505,12 @@ switch ($action) {
             ->order_by_asc('product_category')
             ->find_array();
 
-        // Branch list for filter
-        $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
-
         $ui->assign('product_type', $product_type);
         $ui->assign('categories', $categories);
-        $ui->assign('branches', $branches);
         $ui->assign('type','Product');
 
-        $ui->assign('xheader', Asset::css(['s2/css/select2.min','datatables.min', 'buttons.dataTables.min', 'modal']));
-        $ui->assign('xfooter', Asset::js(['s2/js/select2.min','datatables.min', 'dataTables.buttons.min', 'buttons.print.min', 'modal', 'numeric']));
+        $ui->assign('xheader', Asset::css(['datatables.min', 'buttons.dataTables.min', 'modal']));
+        $ui->assign('xfooter', Asset::js(['datatables.min', 'dataTables.buttons.min', 'buttons.print.min', 'modal', 'numeric']));
         $ui->assign('xfooter2', '<script type="text/javascript" src="' . $_theme . '/lib/ps-list.js"></script>');
         $ui->display('ps-list.tpl');
         break;
@@ -605,19 +526,17 @@ switch ($action) {
 
         // column index -> db column mapping for ordering
         $columns = [
-            0  => 'i.id',
-            1  => 'i.id',             // branch column (computed)
-            2  => 'i.item_number',
-            3  => 'i.name',
-            4  => 'i.product_type',
-            5  => 'i.purchase_price',
-            6  => 'i.sales_price',
-            7  => 'i.product_stock',
-            8  => 'i.product_category',
-            9  => 'i.product_image',
-            10 => 'i.description',
-            11 => 'i.id',            // QR
-            12 => 'i.id'             // Manage
+            0 => 'i.id',
+            1 => 'i.item_number',
+            2 => 'i.name',
+            3 => 'i.product_type',
+            4 => 'i.purchase_price',
+            5 => 'i.sales_price',
+            6 => 'i.product_stock',
+            7 => 'i.product_category',
+            8 => 'i.product_image',
+            9 => 'i.description',
+            10 => 'i.id'
         ];
 
         $length = isset($request['length']) ? (int)$request['length'] : 25;
@@ -636,15 +555,8 @@ switch ($action) {
             $base_q->where('i.product_type', $product_type);
         }
 
-        $branch_id = isset($request['branch_id']) ? trim($request['branch_id']) : '';
-        if ($branch_id !== '' && $branch_id !== 'all') {
-            $base_q->where_raw('EXISTS (SELECT 1 FROM sys_items_stock sis WHERE sis.item_id = i.id AND sis.branch_id = ?)', [$branch_id]);
-        }
-
         if (!empty($request['product_category'])) {
-            // Case-insensitive match to avoid issues with casing/spacing from UI
-            $category = trim($request['product_category']);
-            $base_q->where_raw('LOWER(i.product_category) = LOWER(?)', [$category]);
+            $base_q->where('i.product_category', $request['product_category']);
         }
 
         // general search
@@ -677,25 +589,6 @@ switch ($action) {
             $stock = isset($stock_info['current_stock_count']) ? $stock_info['current_stock_count'] : 0;
             $stock_label = $stock . ' ' . $r['product_stock_type'];
 
-            // Branch summary
-            $branch_stock = product_stock_info_by_branch($r['id']);
-            $branch_labels = [];
-            foreach ($branch_stock as $bid => $qty) {
-                if ($bid === null || $bid === '') {
-                    continue;
-                }
-                // Prefer alias; fall back to account name; finally branch id
-                $branch_name = get_branch_name($bid, 'alias');
-                if (!$branch_name) {
-                    $branch_name = get_branch_name($bid, 'account');
-                }
-                if (!$branch_name) {
-                    $branch_name = $bid;
-                }
-                $branch_labels[] = $branch_name;
-            }
-            $branch_text = !empty($branch_labels) ? implode(', ', $branch_labels) : '-';
-
             $img_link = (!empty($r['product_image'])) ? '<a target="_blank" href="'.$r['product_image'].'">View</a>' : '-';
 
             $desc = !empty($r['description']) ? htmlspecialchars($r['description'], ENT_QUOTES, 'UTF-8') : '-';
@@ -704,33 +597,15 @@ switch ($action) {
             $qr_link = !empty($qr_image)
                 ? '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>'
                 : '-';
-
-            $preferred_branch_id = '';
-            if ($branch_id !== '' && $branch_id !== 'all') {
-                $preferred_branch_id = $branch_id;
-            } elseif (!empty($branch_stock)) {
-                foreach ($branch_stock as $bid => $qty) {
-                    if ($bid !== null && $bid !== '') {
-                        $preferred_branch_id = $bid;
-                        break;
-                    }
-                }
-            }
-
-            $history_url = U . 'ps/view/' . $r['id'];
-            if (!empty($preferred_branch_id)) {
-                $history_url .= '?branch_id=' . urlencode((string) $preferred_branch_id);
-            }
-            $actions = '<a href="'. $history_url .'" class="btn btn-success btn-xs"><i class="fa fa-bar-chart"></i> Stock History</a> ';
-            // if ($user->roleid == 0) {
-                $actions .= '<a href="#" class="btn btn-warning btn-xs cedit_stock" data-id="'.$r['id'].'" data-branch-id="'.htmlspecialchars((string)$preferred_branch_id, ENT_QUOTES, 'UTF-8').'"><i class="fa fa-plus"></i> Add Stock</a> ';
+            $actions = '<a href="'. U .'ps/view/'. $r['id'] .'" class="btn btn-success btn-xs"><i class="fa fa-bar-chart"></i> Stock History</a> ';
+            if ($user->roleid == 0) {
+                $actions .= '<a href="#" class="btn btn-warning btn-xs cedit_stock" data-id="'.$r['id'].'"><i class="fa fa-plus"></i> Add Stock</a> ';
                 $actions .= '<a href="#" class="btn btn-primary btn-xs cedit" data-id="'.$r['id'].'"><i class="fa fa-pencil"></i> Edit</a> ';
                 $actions .= '<a href="#" class="btn btn-danger btn-xs cdelete cdelete-product" data-id="'.$r['id'].'" data-filter="'.$r['product_type'].'"><i class="fa fa-trash"></i> Delete</a>';
-            // }
+            }
 
             $data[] = [
                 $serial,
-                htmlspecialchars($branch_text, ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($r['item_number'], ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($r['name'], ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($r['product_type'], ENT_QUOTES, 'UTF-8'),
@@ -849,36 +724,7 @@ switch ($action) {
         $purchase_price = _post('purchase_price');
         $product_stock  = _post('product_stock');
         $product_type   = _post('product_type');
-        // $branch_id   = trim((string) _post('branch_id'));
-        // Resolve branch from the product itself; ignore POSTed branch_id
-        $item_for_branch = ORM::for_table('sys_items')->find_one($id);
-        $branch_id   = ($item_for_branch && !empty($item_for_branch->branch_id)) ? (string) $item_for_branch->branch_id : '';
-        if ($branch_id === '' || $branch_id === 'all') {
-            // Prefer a branch that already has stock history for this item
-            $branch_stock = product_stock_info_by_branch($id);
-            if (is_array($branch_stock)) {
-                foreach ($branch_stock as $bid => $qty) {
-                    if ($bid !== null && $bid !== '') {
-                        $branch_id = (string) $bid;
-                        break;
-                    }
-                }
-            }
-        }
-        if ($branch_id === '' || $branch_id === 'all') {
-            // Fallback to user's branch, then first branch in system
-            if (!empty($user->branch_id)) {
-                $branch_id = (string) $user->branch_id;
-            } else {
-                $first_branch = ORM::for_table('sys_accounts')->order_by_asc('account')->find_one();
-                if ($first_branch) {
-                    $branch_id = (string) $first_branch->id;
-                }
-            }
-        }
-        if ($branch_id === '' || $branch_id === 'all') {
-            $msg .= '<p>Branch is required</p>';
-        }
+        $branch_id   = _post('branch_id');
         
         if($product_type == 'customize'){
             if(empty($vendor_id)){
@@ -1090,27 +936,7 @@ switch ($action) {
             if($d)
             {
                 $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
-                $selected_branch_id = isset($_GET['branch_id']) ? trim((string) $_GET['branch_id']) : '';
-                if ($selected_branch_id === '' || $selected_branch_id === 'all') {
-                    $branch_stock = product_stock_info_by_branch($id);
-                    if (is_array($branch_stock)) {
-                        foreach ($branch_stock as $bid => $qty) {
-                            if ($bid !== null && $bid !== '') {
-                                $selected_branch_id = (string) $bid;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (($selected_branch_id === '' || $selected_branch_id === 'all') && !empty($user->branch_id)) {
-                    $selected_branch_id = (string) $user->branch_id;
-                }
-                if (($selected_branch_id === '' || $selected_branch_id === 'all') && !empty($branches)) {
-                    $selected_branch_id = (string) $branches[0]['id'];
-                }
-
                 $ui->assign('branches',$branches);
-                $ui->assign('selected_branch_id', $selected_branch_id);
                 
                 $ui->assign('d',$d);
                 $ui->assign('vendorList',$vendorList);

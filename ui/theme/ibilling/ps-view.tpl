@@ -1,4 +1,4 @@
-{include file="sections/header.tpl"}
+﻿{include file="sections/header.tpl"}
 
 {*$stock = json_decode(product_stock_info($id), true)*}
 <div class="row">
@@ -78,20 +78,24 @@
 
         <div class="ibox float-e-margins">
             <div class="ibox-content">
-                <button style="float:right;" type="button" class="hide btn btn-primary ctransfer_stock" data-itemid="{$id}">
+                <button style="float:right;" type="button" class="btn btn-primary ctransfer_stock" data-itemid="{$id}">
                     <i class="fa fa-exchange"></i> Transfer Stock
                 </button>
                 <h1>Product Name : <b>{$p_name}</b></h1>
-                {if $selected_branch_name neq ''}
-                    <h4>Branch: <b class="branch-name">{$selected_branch_name}</b></h4>
-                {/if}
-                <h3>Current Stock :
-                    {if $selected_branch_stock_count < 0}
-                        <span class="stock-negative">{$selected_branch_stock_count}</span>
-                    {else}
-                        <span>{$selected_branch_stock_count}</span>
-                    {/if} {ucfirst($item['product_stock_type'])}
-                </h3>
+                <h3>Current Stock by Branch :</h3>
+                <ul>
+                {foreach $branch_stock as $branch_id => $stock_count}
+                    <li>
+                        {assign var="branch_name" value=get_branch_name($branch_id, alias)}
+                        <span class="branch-name">{if $branch_name != ''}{$branch_name}{else}<i>Unknown Branch</i>{/if}</span> : 
+                        {if $stock_count < 0}
+                            <span class="stock-negative">{$stock_count}</span>
+                        {else}
+                            <span>{$stock_count}</span>
+                        {/if} {ucfirst($item['product_stock_type'])}
+                    </li>
+                {/foreach}
+                </ul>
             </div>
         </div>
 
@@ -102,6 +106,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Branch</th>
                             <th>Stock</th>
                             <th>Date</th>
                         </tr>
@@ -113,6 +118,7 @@
                             {assign var="credited_total" value=$credited_total + $row['stock']}
                             <tr>
                                 <td>{$i++}</td>
+                                <td>{get_branch_name($row['branch_id'], alias)}</td>
                                 <td>{$row['stock']}</td>
                                 <td>{date('Y-m-d H:i:s', strtotime($row['timestamp']))}</td>
                             </tr> 
@@ -120,7 +126,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th class="text-right">Total</th>
+                            <th colspan="2" class="text-right">Total</th>
                             <th>{$credited_total}</th>
                             <th></th>
                         </tr>
@@ -136,6 +142,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Branch</th>
                             <th>Stock</th>
                             <th>Ready Product Name</th>
                             <th>Invoice ID</th>
@@ -149,6 +156,7 @@
                             {assign var="debited_total" value=$debited_total + $row['stock']}
                             <tr>
                                 <td>{$i++}</td>
+                                <td>{get_branch_name($row['branch_id'], alias)}</td>
                                 <td>{$row['stock']}</td>
                                 <td>
                                     {if !empty($row['parent_item_id'])}
@@ -170,7 +178,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th class="text-right">Total</th>
+                            <th colspan="2" class="text-right">Total</th>
                             <th>{$debited_total}</th>
                             <th colspan="3"></th>
                         </tr>
@@ -226,7 +234,7 @@
 	</div>*}
 
 
-<div class="ibox float-e-margins hide">
+<div class="ibox float-e-margins">
     <div class="ibox-content">
         <h3>Recent Stock Transfers</h3>
 

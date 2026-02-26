@@ -94,8 +94,10 @@
                      </div>
                      <div class="col-lg-3">
                         <select name="product_stock_type" class="form-control">
-                            <option value="pieces">Pieces</option>
+                            <option value="kg">KG</option>
+                            <option value="tola">Tola</option>
                             <option value="gram">Gram (1 tola ≈ 12 g)</option>
+                            <option value="pieces">Pieces</option>
                         </select>
                         <!--<input type="text" name="product_stock_type" class="form-control" autocomplete="off" placeholder="e.g : kg, meter, packet">-->
                      </div>

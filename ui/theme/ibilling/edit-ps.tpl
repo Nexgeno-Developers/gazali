@@ -64,8 +64,10 @@
 			</div>
 			<div class="col-lg-3">
 					<select name="product_stock_type" class="form-control">
+						<option value="kg" {if $d['product_stock_type'] eq 'kg'} selected {/if}>KG</option>
+						<option value="tola" {if $d['product_stock_type'] eq 'tola'} selected {/if}>Tola (1 tola ≈ 12 g)</option>
+						<option value="gram" {if $d['product_stock_type'] eq 'gram'} selected {/if}>Gram</option>
 						<option value="pieces" {if $d['product_stock_type'] eq 'pieces'} selected {/if}>Pieces</option>
-						<option value="gram" {if $d['product_stock_type'] eq 'gram'} selected {/if}>Gram (1 tola ≈ 12 g)</option>
 					</select>				
 				<!--<input type="text" name="product_stock_type" value="{$d['product_stock_type']}" class="form-control" autocomplete="off" placeholder="e.g : kg, meter, packet">-->
 			</div>

@@ -29,15 +29,15 @@ switch ($action) {
         // Dynamic categories and their items
         $categories = ORM::for_table('sys_items_category')->find_array();
         $category_items = [];
-        $default_filter_branch = (string) $user->branch_id;
+        // $default_filter_branch = (string) $user->branch_id;
         foreach ($categories as $cat) {
             $items_q = ORM::for_table('sys_items')
                 ->where('type', 'Product')
                 ->where('product_category', $cat['value']);
 
-            if ($default_filter_branch !== '') {
-                $items_q->where('branch_id', $default_filter_branch);
-            }
+            // if ($default_filter_branch !== '') {
+            //     $items_q->where('branch_id', $default_filter_branch);
+            // }
 
             $category_items[$cat['value']] = $items_q->find_array();
         }
@@ -553,15 +553,15 @@ switch ($action) {
             $categories = ORM::for_table('sys_items_category')->find_array();
             $category_items = [];
             $components = [];
-            $prefill_branch_id = ($user->roleid == 0) ? (string) $d->branch_id : (string) $user->branch_id;
+            // $prefill_branch_id = ($user->roleid == 0) ? (string) $d->branch_id : (string) $user->branch_id;
             foreach ($categories as $cat) {
                 $val = $cat['value'];
                 $items_q = ORM::for_table('sys_items')
                     ->where('type', 'Product')
                     ->where('product_category', $val);
-                if ($prefill_branch_id !== '') {
-                    $items_q->where('branch_id', $prefill_branch_id);
-                }
+                // if ($prefill_branch_id !== '') {
+                //     $items_q->where('branch_id', $prefill_branch_id);
+                // }
                 $category_items[$val] = $items_q->find_array();
                 $components[$val] = json_decode($d[$val], true) ?: [];
             }
