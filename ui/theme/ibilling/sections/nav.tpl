@@ -194,8 +194,11 @@
         <li class="{if $_application_menu eq 'ps'}active{/if}">
             <a href="#"><i class="fa fa-cube"></i> <span class="nav-label">Manage Products</span><span class="fa arrow"></span></a>
             <ul class="nav nav-second-level">
+                {if $user->roleid eq 0}
                     <li><a href="{$_url}ps/p-new/">Add Product</a></li>
+                {/if}
                 <li><a href="{$_url}ps/p-list/">List Product</a></li>
+                <li><a href="{$_url}ps/category-list/">Product Categories</a></li>
                 <!--<li><a href="{$_url}ps/s-list/">{$_L['Services']}</a></li>
                 <li><a href="{$_url}ps/s-new/">{$_L['New Service']}</a></li>-->
 
@@ -206,7 +209,7 @@
 
     {/if}
 
-    {if has_access($user->roleid,'products_n_services')}
+    {if has_access($user->roleid,'gift_box')}
     <li class="{if $_application_menu eq 'manage'}active{/if}">
             <a href="#"><i class="fa fa-cube"></i> <span class="nav-label">Manage Gift Box</span><span class="fa arrow"></span></a>
             <ul class="nav nav-second-level">
@@ -214,7 +217,7 @@
                 <li><a href="{$_url}manage/list-design/">List Gift Box</a></li>
             </ul>
         </li>
-        {/if}
+    {/if}
 
     {$admin_extra_nav[6]}
 

@@ -6,6 +6,53 @@ $ui->assign('_st', $_L['Products n Services']);
 $action = $routes['1'];
 $user = User::_info();
 $ui->assign('user', $user);
+
+// --- Helper functions for category <-> sys_designs column sync -----------------
+if (!function_exists('ps_normalize_category_value')) {
+    function ps_normalize_category_value($value)
+    {
+        $value = strtolower(trim((string) $value));
+        $value = preg_replace('/\s+/', '_', $value);
+        return $value;
+    }
+}
+
+if (!function_exists('ps_column_name_is_valid')) {
+    function ps_column_name_is_valid($value)
+    {
+        return (bool) preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $value);
+    }
+}
+
+if (!function_exists('ps_designs_column_exists')) {
+    function ps_designs_column_exists($column)
+    {
+        if (!ps_column_name_is_valid($column)) {
+            return false;
+        }
+        $row = ORM::for_table('sys_designs')
+            ->raw_query("SHOW COLUMNS FROM `sys_designs` LIKE ?", [$column])
+            ->find_one();
+        return (bool) $row;
+    }
+}
+
+if (!function_exists('ps_designs_column_has_data')) {
+    function ps_designs_column_has_data($column)
+    {
+        if (!ps_column_name_is_valid($column)) {
+            return false;
+        }
+        $sql = "SELECT COUNT(*) AS c FROM `sys_designs` WHERE `$column` IS NOT NULL AND TRIM(`$column`) <> '' AND TRIM(`$column`) <> '[]'";
+        $stmt = ORM::get_db()->query($sql);
+        if (!$stmt) {
+            return false;
+        }
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return isset($row['c']) ? ((int) $row['c'] > 0) : false;
+    }
+}
+
 switch ($action) {
 
 /*    case 'modal-list':
@@ -60,6 +107,124 @@ switch ($action) {
       //$ui->display('add-ps.tpl');
 			
         break;*/
+
+        case 'category-list':
+            if(!has_access($user->roleid,'products_n_services')){
+                r2(U."dashboard",'e',$_L['You do not have permission']);
+            }
+
+            $categories = ORM::for_table('sys_items_category')->order_by_asc('id')->find_array();
+            $ui->assign('categories', $categories);
+            $ui->display('product-category-list.tpl');
+            break;
+
+        case 'category-add':
+            if(!has_access($user->roleid,'products_n_services')){
+                r2(U."dashboard",'e',$_L['You do not have permission']);
+            }
+            $ui->assign('mode', 'add');
+            $ui->assign('category', []);
+            $ui->display('product-category-form.tpl');
+            break;
+
+        case 'category-edit':
+            if(!has_access($user->roleid,'products_n_services')){
+                r2(U."dashboard",'e',$_L['You do not have permission']);
+            }
+            $id = isset($routes['2']) ? (int)$routes['2'] : 0;
+            $category = ORM::for_table('sys_items_category')->find_one($id);
+            if(!$category){
+                r2(U."ps/category-list/",'e','Category not found');
+            }
+            $ui->assign('mode', 'edit');
+            $ui->assign('category', $category);
+            $ui->display('product-category-form.tpl');
+            break;
+
+        case 'category-save':
+            if(!has_access($user->roleid,'products_n_services')){
+                r2(U."dashboard",'e',$_L['You do not have permission']);
+            }
+
+            $id    = (int) _post('id');
+            $name  = trim(_post('name'));
+            $value = ps_normalize_category_value(_post('value'));
+
+            if($name === ''){
+                r2(U."ps/category-list/",'e','Category name is required');
+            }
+
+            if($id){
+                $category = ORM::for_table('sys_items_category')->find_one($id);
+                if(!$category){
+                    r2(U."ps/category-list/",'e','Category not found');
+                }
+                $category->name = $name;
+                $category->save();
+                _msglog('s','Category updated successfully');
+                r2(U."ps/category-list/");
+            }
+
+            // Creating new category
+            if($value === ''){
+                r2(U."ps/category-list/",'e','Category value is required');
+            }
+            if(!ps_column_name_is_valid($value)){
+                r2(U."ps/category-list/",'e','Value must start with a letter and contain only letters, numbers, or underscores');
+            }
+
+            $exists = ORM::for_table('sys_items_category')->where('value',$value)->count();
+            if($exists){
+                r2(U."ps/category-list/",'e','A category with the same value already exists');
+            }
+
+            // Add column to sys_designs if missing
+            if(!ps_designs_column_exists($value)){
+                try{
+                    ORM::get_db()->exec("ALTER TABLE `sys_designs` ADD `{$value}` LONGTEXT NULL");
+                }catch(Exception $e){
+                    r2(U."ps/category-list/",'e','Unable to add column to sys_designs: '.$e->getMessage());
+                }
+            }
+
+            $category = ORM::for_table('sys_items_category')->create();
+            $category->name = $name;
+            $category->value = $value;
+            $category->timestamp = date('Y-m-d H:i:s');
+            $category->save();
+
+            _msglog('s','Category created successfully');
+            r2(U."ps/category-list/");
+            break;
+
+        case 'category-delete':
+            if(!has_access($user->roleid,'products_n_services')){
+                r2(U."dashboard",'e',$_L['You do not have permission']);
+            }
+
+            $id = isset($routes['2']) ? (int)$routes['2'] : 0;
+            $category = ORM::for_table('sys_items_category')->find_one($id);
+            if(!$category){
+                r2(U."ps/category-list/",'e','Category not found');
+            }
+
+            $value = ps_normalize_category_value($category->value);
+
+            if(ps_designs_column_exists($value)){
+                if(ps_designs_column_has_data($value)){
+                    r2(U."ps/category-list/",'e','Cannot delete: Gift Box In use');
+                }
+                try{
+                    ORM::get_db()->exec("ALTER TABLE `sys_designs` DROP COLUMN `{$value}`");
+                }catch(Exception $e){
+                    r2(U."ps/category-list/",'e','Failed to drop column from sys_designs: '.$e->getMessage());
+                }
+            }
+
+            $category->delete();
+            _msglog('s','Category deleted successfully');
+            r2(U."ps/category-list/");
+            break;
 
         case 'modal-list':
 		

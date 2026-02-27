@@ -22,7 +22,7 @@ switch ($action) {
 
     case 'add-design':
         
-        if(!has_access($user->roleid, 'products_n_services')) {
+        if(!has_access($user->roleid, 'gift_box')) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
 
@@ -77,7 +77,7 @@ switch ($action) {
     break;        
 
     case 'branch-category-items':
-        if(!has_access($user->roleid, 'products_n_services')) {
+        if(!has_access($user->roleid, 'gift_box')) {
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode(['success' => false, 'message' => $_L['You do not have permission']]);
             break;
@@ -266,7 +266,7 @@ switch ($action) {
 
 
     case 'list-design':
-        if(!has_access($user->roleid, 'products_n_services')) {
+        if(!has_access($user->roleid, 'gift_box')) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
         $cloths = ORM::for_table('sys_cloths')->select('id')->select('name')->order_by_asc('name')->find_array();
@@ -288,7 +288,7 @@ switch ($action) {
         break;
 
     case 'list-design-datatable':
-        if(!has_access($user->roleid, 'products_n_services')) {
+        if(!has_access($user->roleid, 'gift_box')) {
             header('Content-Type: application/json');
             echo json_encode(['data' => [], 'recordsTotal' => 0, 'recordsFiltered' => 0]);
             break;
