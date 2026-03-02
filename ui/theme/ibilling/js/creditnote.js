@@ -27,13 +27,35 @@
 
     function initCreditNoteCalc(){
         var paidTotal = parseFloat($('#items-table').data('paid-total')) || 0;
+        var availableRefund = parseFloat($('#refund_amount').data('available-refund')) || 0;
+        var remainingInvoice = parseFloat($('#items-table').data('remaining-invoice')) || 0;
         var refundManual = false;
 
         function recalc(){
             var grand = calculateTotals();
-            if(paidTotal > 0 && !refundManual){
-                var suggested = Math.min(paidTotal, grand);
-                $('#refund_amount').val(suggested.toFixed(2));
+            var maxRefund = Math.min(availableRefund, grand);
+            if(isNaN(maxRefund) || maxRefund < 0){ maxRefund = 0; }
+            var $refund = $('#refund_amount');
+            $refund.attr('max', maxRefund.toFixed(2));
+            var current = parseFloat($refund.val()) || 0;
+            if(current > maxRefund){
+                current = maxRefund;
+                $refund.val(current.toFixed(2));
+            }
+            if(!refundManual){
+                $refund.val(maxRefund.toFixed(2));
+            }
+
+            var $warn = $('#over_amount_warn');
+            var $btn = $('#btnSubmit');
+            var overBy = grand - remainingInvoice;
+            if(overBy > 0.0001){
+                $warn.text('Over remaining invoice amount by ' + overBy.toFixed(2));
+                $warn.show();
+                $btn.prop('disabled', true);
+            } else {
+                $warn.hide();
+                $btn.prop('disabled', false);
             }
         }
 

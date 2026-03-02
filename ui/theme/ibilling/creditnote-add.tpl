@@ -52,7 +52,7 @@
 
                 <h5>Return Lines (from Invoice)</h5>
                 <div class="table-responsive">
-                    <table class="table table-bordered" id="items-table" data-paid-total="{$paid_total}">
+                    <table class="table table-bordered" id="items-table" data-paid-total="{$paid_total}" data-remaining-invoice="{$remaining_invoice_amount}">
                         <thead>
                             <tr>
                                 <th style="width:25%">Product</th>
@@ -84,7 +84,7 @@
                                         <input type="hidden" class="item_branch" name="item_branch[]" value="{$it.branch_id|default:$invoice.company_id}">
                                     </td>
                                     <td>
-                                        <input type="text" class="form-control item_price" name="item_price[]" value="{$it.amount}">
+                                        <input type="number" step="0.01" class="form-control item_price" name="item_price[]" value="{$it.amount}" max="{$it.amount}">
                                     </td>
                                     <td><input type="text" class="form-control item_total" name="item_total[]" value="0.00" readonly></td>
                                     <td><span class="label label-info">{$available}</span></td>
@@ -102,7 +102,8 @@
                         <h5>Refund (optional)</h5>
                         <div class="form-group">
                             <label for="refund_amount">Refund Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="refund_amount" name="refund_amount" value="0">
+                            <input type="number" step="0.01" class="form-control" id="refund_amount" name="refund_amount" value="0" max="{$available_refund}" data-available-refund="{$available_refund}" {if $available_refund <= 0}readonly{/if}>
+                            <small class="text-muted">Paid: {$paid_total|string_format:"%.2f"} | Refunded: {$refunded_total|string_format:"%.2f"} | Remaining refundable: {$available_refund|string_format:"%.2f"}</small>
                         </div>
                         <div class="form-group">
                             <label for="refund_account_id">Refund From Account</label>
@@ -135,7 +136,13 @@
                             </tr>
                             <tr>
                                 <th class="text-right">Total</th>
-                                <td class="text-right"><strong id="summary_total">0.00</strong></td>
+                                <td class="text-right">
+                                    <strong id="summary_total">0.00</strong>
+                                    <div id="invoice_remaining_info" class="text-muted small">
+                                        Invoice total: {$invoice_total|string_format:"%.2f"} | Already returned: {$returned_total_amount|string_format:"%.2f"} | Remaining: {$remaining_invoice_amount|string_format:"%.2f"}
+                                    </div>
+                                    <div id="over_amount_warn" class="text-danger small" style="display:none;"></div>
+                                </td>
                             </tr>
                         </table>
                     </div>
@@ -150,20 +157,54 @@
 <script>
 // Fallback inline calculator in case external script is cached/blocked
 (function($){
+    var refundManual = false;
     function recalc(){
         var subtotal = 0;
         $('#items-table tbody tr').each(function(){
             var $tr = $(this);
-            var qty   = parseFloat($tr.find('.item_qty').val()) || 0;
-            var price = parseFloat($tr.find('.item_price').val()) || 0;
+            var $qtyInput = $tr.find('.item_qty');
+            var $priceInput = $tr.find('.item_price');
+            var qty   = parseFloat($qtyInput.val()) || 0;
+            var price = parseFloat($priceInput.val()) || 0;
+            var maxQty = parseFloat($qtyInput.attr('max'));
+            var maxPrice = parseFloat($priceInput.attr('max'));
+            if(!isNaN(maxQty) && qty > maxQty){ qty = maxQty; $qtyInput.val(maxQty); }
+            if(!isNaN(maxPrice) && price > maxPrice){ price = maxPrice; $priceInput.val(maxPrice); }
             var lineSub = qty * price;
             subtotal += lineSub;
             $tr.find('.item_total').val(lineSub.toFixed(2));
         });
+        var availableRefund = parseFloat($('#refund_amount').data('available-refund')) || 0;
+        var remainingInvoice = parseFloat($('#items-table').data('remaining-invoice')) || 0;
         $('#summary_subtotal').text(subtotal.toFixed(2));
         $('#summary_total').text(subtotal.toFixed(2));
+
+        var maxRefund = Math.min(availableRefund, subtotal);
+        if(isNaN(maxRefund) || maxRefund < 0){ maxRefund = 0; }
+        var $refund = $('#refund_amount');
+        $refund.attr('max', maxRefund.toFixed(2));
+        var current = parseFloat($refund.val()) || 0;
+        if(current > maxRefund){
+            $refund.val(maxRefund.toFixed(2));
+        }
+        if(!refundManual){
+            $refund.val(maxRefund.toFixed(2));
+        }
+
+        var $warn = $('#over_amount_warn');
+        var $btn = $('#btnSubmit');
+        var overBy = subtotal - remainingInvoice;
+        if(overBy > 0.0001){
+            $warn.text('Over remaining invoice amount by ' + overBy.toFixed(2));
+            $warn.show();
+            $btn.prop('disabled', true);
+        } else {
+            $warn.hide();
+            $btn.prop('disabled', false);
+        }
     }
     $(function(){
+        $('#refund_amount').on('input change keyup', function(){ refundManual = true; });
         $('#items-table').on('input change keyup', '.item_qty, .item_price', recalc);
         recalc();
     });

@@ -65,6 +65,7 @@ switch ($action) {
         $existing_returns = ORM::for_table('sys_credit_notes')->table_alias('cn')
             ->join('sys_creditnoteitems','cni.creditnoteid = cn.id','cni')
             ->where('cn.original_invoice_id',$invoice_id)
+            ->where_not_equal('cn.status','Cancelled')
             ->select('cni.product_id')
             ->select_expr('SUM(cni.qty)','returned_qty')
             ->group_by('cni.product_id')
@@ -82,13 +83,39 @@ switch ($action) {
         // total paid against invoice
         $paid_total = ORM::for_table('sys_transactions')->where('iid',$invoice_id)->where('type','Income')->sum('cr');
         $paid_total = $paid_total ?: 0;
+        // total already refunded for this invoice across all return invoices
+        $refunded_total = ORM::for_table('sys_transactions')->table_alias('t')
+            ->join('sys_credit_notes','cn.id = t.creditnote_id','cn')
+            ->where('cn.original_invoice_id',$invoice_id)
+            ->where_raw('t.dr > 0')
+            ->sum('t.dr');
+        $refunded_total = $refunded_total ?: 0;
+        $available_refund = max($paid_total - $refunded_total, 0);
         $ui->assign('paid_total', $paid_total);
+        $ui->assign('refunded_total', $refunded_total);
+        $ui->assign('available_refund', $available_refund);
         $refund_account_name = get_branch_name($invoice->company_id,'alias');
         if(!$refund_account_name){
             $refund_account_name = get_branch_name($invoice->company_id,'account');
         }
         $ui->assign('refund_account_name', $refund_account_name);
         $ui->assign('idate', date('Y-m-d'));
+        // invoice monetary total for validation (prefer stored total)
+        $inv_subtotal = isset($invoice->subtotal) ? $invoice->subtotal : 0;
+        $inv_tax      = isset($invoice->tax) ? $invoice->tax : 0;
+        $inv_shipping = isset($invoice->shipping) ? $invoice->shipping : 0;
+        $inv_discount = isset($invoice->discount) ? $invoice->discount : 0;
+        $invoice_total = ($invoice->total > 0) ? $invoice->total : ($inv_subtotal + $inv_tax + $inv_shipping - $inv_discount);
+        $invoice_total = Finance::amount_fix($invoice_total);
+        $returned_total_amount = ORM::for_table('sys_credit_notes')
+            ->where('original_invoice_id',$invoice_id)
+            ->where_not_equal('status','Cancelled')
+            ->sum('total');
+        $returned_total_amount = $returned_total_amount ?: 0;
+        $remaining_invoice_amount = max($invoice_total - $returned_total_amount, 0);
+        $ui->assign('invoice_total', $invoice_total);
+        $ui->assign('returned_total_amount', $returned_total_amount);
+        $ui->assign('remaining_invoice_amount', $remaining_invoice_amount);
 
         $ui->assign('xheader', Asset::css(array('s2/css/select2.min','dp/dist/datepicker.min')));
         $ui->assign('xfooter', Asset::js(array('s2/js/select2.min','s2/js/i18n/'.lan(),'dp/dist/datepicker.min','dp/i18n/'.$config['language'],'numeric','creditnote')));
@@ -198,8 +225,14 @@ switch ($action) {
                 $msg .= 'Return qty exceeds available for item '.$inv_it['description'].' (available '.$available_qty.').<br>';
             }
 
-            // use invoice price and tax to avoid tampering
-            $price = Finance::amount_fix($inv_it['amount']);
+            // use submitted price but cap to original invoice price if above it
+            $submitted_price = isset($price_arr[$k]) ? Finance::amount_fix($price_arr[$k]) : 0;
+            $price_cap = Finance::amount_fix($inv_it['amount']);
+            if($submitted_price < 0){
+                $submitted_price = 0;
+            }
+            $price = ($submitted_price > $price_cap && $price_cap > 0) ? $price_cap : $submitted_price;
+
             $tax_rate = Finance::amount_fix($inv_it['taxrate']);
             $unit = $inv_it['unit'] ?: 'qty';
             $branch_for_item = !empty($inv_it['branch_id']) ? $inv_it['branch_id'] : $customer_branch;
@@ -246,17 +279,34 @@ switch ($action) {
             echo 'Return Invoice total must be greater than zero.';
             break;
         }
-        $existing_cn_total = ORM::for_table('sys_credit_notes')->where('original_invoice_id',$original_invoice_id)->sum('total');
+        $existing_cn_total = ORM::for_table('sys_credit_notes')
+            ->where('original_invoice_id',$original_invoice_id)
+            ->where_not_equal('status','Cancelled')
+            ->sum('total');
         $existing_cn_total = $existing_cn_total ?: 0;
-        if(($existing_cn_total + $grand_total) - $invoice->subtotal > 0.0001){
-            echo 'Credit note exceeds remaining invoice amount.';
+        $inv_subtotal = isset($invoice->subtotal) ? $invoice->subtotal : 0;
+        $inv_tax      = isset($invoice->tax) ? $invoice->tax : 0;
+        $inv_shipping = isset($invoice->shipping) ? $invoice->shipping : 0;
+        $inv_discount = isset($invoice->discount) ? $invoice->discount : 0;
+        $invoice_total = ($invoice->total > 0) ? $invoice->total : ($inv_subtotal + $inv_tax + $inv_shipping - $inv_discount);
+        $invoice_total = Finance::amount_fix($invoice_total);
+        $remaining_invoice_amount = max($invoice_total - $existing_cn_total, 0);
+        if(($existing_cn_total + $grand_total) - $invoice_total > 0.0001){
+            echo 'Return total exceeds remaining invoice amount. Remaining: '.number_format($remaining_invoice_amount,2,'.','');
             break;
         }
 
-        // default refund amount if invoice had payments
+        // default refund amount if invoice had payments and remaining refundable balance
         $paid_total = ORM::for_table('sys_transactions')->where('iid',$original_invoice_id)->where('type','Income')->sum('cr');
         $paid_total = $paid_total ?: 0;
-        $auto_refund_amount = min($paid_total, $grand_total);
+        $refunded_total = ORM::for_table('sys_transactions')->table_alias('t')
+            ->join('sys_credit_notes','cn.id = t.creditnote_id','cn')
+            ->where('cn.original_invoice_id',$original_invoice_id)
+            ->where_raw('t.dr > 0')
+            ->sum('t.dr');
+        $refunded_total = $refunded_total ?: 0;
+        $available_refund = max($paid_total - $refunded_total, 0);
+        $auto_refund_amount = min($available_refund, $grand_total);
 
         // create credit note
         $cn_number = ORM::for_table('sys_credit_notes')->max('id');
@@ -273,7 +323,7 @@ switch ($action) {
         $cn->discount = $discount_amount;
         $cn->taxamt = Finance::amount_fix($taxTotal);
         $cn->total = Finance::amount_fix($grand_total);
-        $cn_status = (($existing_cn_total + $grand_total) >= ($invoice->subtotal - 0.0001)) ? 'Closed' : 'Open';
+        $cn_status = (($existing_cn_total + $grand_total) >= ($invoice_total - 0.0001)) ? 'Closed' : 'Open';
         $cn->status = $cn_status;
         $cn->notes = $notes;
         $cn->currency = (int)$currency_id;
@@ -328,6 +378,11 @@ switch ($action) {
         // Optional refund record
         $refund_amount = Finance::amount_fix(_post('refund_amount','0'));
         $refund_account_id = _post('refund_account_id') ?: $invoice->company_id;
+        $max_refund_allowed = min($available_refund, $grand_total);
+        if($refund_amount > $max_refund_allowed + 0.0001){
+            echo 'Refund amount exceeds remaining refundable balance.';
+            break;
+        }
 
         if($refund_amount <= 0 && $auto_refund_amount > 0){
             $refund_amount = $auto_refund_amount;
@@ -342,7 +397,7 @@ switch ($action) {
                 $t = ORM::for_table('sys_transactions')->create();
                 $t->account = $refund_account->account;
                 $t->branch_id = $refund_account_id;
-                $t->type = 'Refund';
+                $t->type = 'Expense';
                 $t->payerid = $cid;
                 $t->amount = $refund_amount;
                 $t->category = 'Customer Refund';
@@ -369,7 +424,7 @@ switch ($action) {
 
         Event::trigger('creditnotes/created/'.$creditnote_id);
 
-            r2(U.'creditnotes/view/'.$creditnote_id,'s','Credit note created');
+            r2(U.'creditnotes/view/'.$creditnote_id,'s','Return Invoice Created');
         } catch (Exception $e){
             r2(U.'creditnotes/add/'.$original_invoice_id,'e','Error: '.$e->getMessage());
         }

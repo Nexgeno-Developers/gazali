@@ -20,7 +20,11 @@
 				<input type="hidden" name="iid" value="{$d['id']}" id="iid">
 				<div class="btn-group  pull-right" role="group" aria-label="...">
                     {if has_access($user->roleid,'sales')}
-                    <a href="{$_url}creditnotes/add/{$d['id']}/" class="btn btn-warning btn-sm" style="margin-right:4px;"><i class="fa fa-undo"></i> Create Return Invoice</a>
+                        {if $can_create_return}
+                            <a href="{$_url}creditnotes/add/{$d['id']}/" class="btn btn-warning btn-sm" style="margin-right:4px;"><i class="fa fa-undo"></i> Create Return Invoice</a>
+                        {else}
+                            <button class="btn btn-default btn-sm" style="margin-right:4px;" disabled title="No returnable amount or quantity left"><i class="fa fa-undo"></i> Create Return Invoice</button>
+                        {/if}
                     {/if}
 					<!--<div class="btn-group" role="group">
 						<button type="button" class="btn  btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">

@@ -455,6 +455,46 @@ $(document).ready(function () {
             $ui->assign('trs_c', $trs_c);
             $ui->assign('a', $a);
             $ui->assign('d', $d);
+            // ---- Return-invoice availability ----
+            $inv_subtotal = isset($d['subtotal']) ? $d['subtotal'] : 0;
+            $inv_tax      = isset($d['tax']) ? $d['tax'] : 0;
+            $inv_shipping = isset($d['shipping']) ? $d['shipping'] : 0;
+            $inv_discount = isset($d['discount']) ? $d['discount'] : 0;
+            $invoice_total_for_returns = ($d['total'] > 0) ? $d['total'] : ($inv_subtotal + $inv_tax + $inv_shipping - $inv_discount);
+            $invoice_total_for_returns = Finance::amount_fix($invoice_total_for_returns);
+
+            $returned_total_amount = ORM::for_table('sys_credit_notes')
+                ->where('original_invoice_id', $id)
+                ->where_not_equal('status','Cancelled')
+                ->sum('total');
+            $returned_total_amount = $returned_total_amount ?: 0;
+            $remaining_return_amount = max($invoice_total_for_returns - $returned_total_amount, 0);
+
+            // quantity-based remaining
+            $returned_qty_map = array();
+            $existing_returns_qty = ORM::for_table('sys_credit_notes')->table_alias('cn')
+                ->join('sys_creditnoteitems','cni.creditnoteid = cn.id','cni')
+                ->where('cn.original_invoice_id',$id)
+                ->where_not_equal('cn.status','Cancelled')
+                ->select('cni.product_id')
+                ->select_expr('SUM(cni.qty)','returned_qty')
+                ->group_by('cni.product_id')
+                ->find_array();
+            foreach($existing_returns_qty as $erq){
+                $returned_qty_map[(int)$erq['product_id']] = (float)$erq['returned_qty'];
+            }
+            $total_available_qty = 0.0;
+            foreach($items as $it){
+                $already_ret = $returned_qty_map[(int)$it['product_id']] ?? 0.0;
+                $available_qty = $it['qty'] - $already_ret;
+                if($available_qty < 0){ $available_qty = 0; }
+                $total_available_qty += $available_qty;
+            }
+            $has_any_qty_left = ($total_available_qty > 0.0001);
+            $can_create_return = ($remaining_return_amount > 0.0001) && $has_any_qty_left;
+            $ui->assign('remaining_return_amount', $remaining_return_amount);
+            $ui->assign('has_any_qty_left', $has_any_qty_left);
+            $ui->assign('can_create_return', $can_create_return);
             $sales_person_name = '-';
             if (!empty($d['sales_person_id'])) {
                 $sales_person = ORM::for_table('sys_users')
