@@ -78,9 +78,25 @@
 
         <div class="ibox float-e-margins">
             <div class="ibox-content">
-                <button style="float:right;" type="button" class="btn btn-primary ctransfer_stock" data-itemid="{$id}">
-                    <i class="fa fa-exchange"></i> Transfer Stock
-                </button>
+                {if $user.roleid == 0}
+                    <div class="pull-right">
+                        <a href="{$_url}ps/request_list/" class="btn btn-default" style="margin-right:8px;">
+                            <i class="fa fa-list"></i> Stock Requests
+                        </a>
+                        <button type="button" class="btn btn-primary ctransfer_stock" data-itemid="{$id}">
+                            <i class="fa fa-exchange"></i> Transfer Stock
+                        </button>
+                    </div>
+                {else}
+                    <div class="pull-right">
+                        <a href="{$_url}ps/request_list/&status=all" class="btn btn-default" style="margin-right:8px;">
+                            <i class="fa fa-list"></i> My Requests
+                        </a>
+                        <button type="button" class="btn btn-info crequest_stock" data-itemid="{$id}">
+                            <i class="fa fa-send"></i> Request Stock
+                        </button>
+                    </div>
+                {/if}
                 <h1>Product Name : <b>{$p_name}</b></h1>
                 <h3>Current Stock by Branch :</h3>
                 <ul>
@@ -252,6 +268,9 @@
                         </div>
                         <div class="transfer-meta small text-muted">
                             Ref: <code>{$t.ref}</code>
+                            {if $t.request_id}
+                                &nbsp; | &nbsp; Request #{$t.request_id}
+                            {/if}
                         </div>
                     </div>
                     <div class="col-sm-3 text-right">
@@ -297,6 +316,51 @@ $(document).ready(function() {
     });
 
     var $modal = $('#ajax-modal');
+
+    // Branch admin: create stock request
+    $(document).on('click', '.crequest_stock', function(e){
+        e.preventDefault();
+        var item_id = $(this).data('itemid');
+        var _url = $("#_url").val();
+        $modal.modal('loading');
+        $modal.load(_url + 'ps/request_form/' + item_id, function(){
+            $modal.modal('show');
+        });
+    });
+
+    $modal.on('click', '#submit_stock_request', function(){
+        var form = $('#stock_request_form')[0];
+        if(!form.checkValidity()){
+            form.reportValidity();
+            return false;
+        }
+        var _url = $("#_url").val();
+        var formData = new FormData(form);
+        $modal.modal('loading');
+        $.ajax({
+            url: _url + 'ps/request_post/',
+            type: 'POST',
+            data: formData,
+            async: false,
+            cache: false,
+            contentType: false,
+            processData: false,
+            dataType: 'json',
+            success: function (res) {
+                $modal.modal('loading');
+                if(res && res.status === 'success'){
+                    $modal.find('.modal-body').prepend('<div class="alert alert-success fade in">'+res.message+'</div>');
+                    setTimeout(function(){ location.reload(); }, 1200);
+                }else{
+                    var msg = (res && res.message) ? res.message : 'Unexpected response';
+                    $modal.find('.modal-body').prepend('<div class="alert alert-danger fade in">'+msg+'</div>');
+                }
+            },
+            error: function () {
+                alert("Error submitting request");
+            }
+        });
+    });
 
     $(document).on('click', '.ctransfer_stock', function(e){
         e.preventDefault();
@@ -452,6 +516,9 @@ $(document).ready(function() {
                         var html = '<div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>';
                         html += '<h4 class="modal-title">Transfer: ' + ref + '</h4></div>';
                         html += '<div class="modal-body">';
+                        if(res.request_id){
+                            html += '<p><strong>Request #</strong> ' + res.request_id + '</p>';
+                        }
                         html += '<p><strong>From:</strong> ' + (res.from_name || '-') + ' &nbsp; &nbsp; <strong>To:</strong> ' + (res.to_name || '-') + '</p>';
                         html += '<p><strong>Qty:</strong> ' + (res.qty || '-') + '</p>';
                         html += '<hr>';

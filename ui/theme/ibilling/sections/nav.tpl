@@ -199,6 +199,7 @@
                 {/if}
                 <li><a href="{$_url}ps/p-list/">List Product</a></li>
                 <li><a href="{$_url}ps/category-list/">Product Categories</a></li>
+                <li><a href="{$_url}ps/my_requests">{if $user->roleid != 0} My Requests {else} Stock Requests {/if}</a></li>
                 <!--<li><a href="{$_url}ps/s-list/">{$_L['Services']}</a></li>
                 <li><a href="{$_url}ps/s-new/">{$_L['New Service']}</a></li>-->
 

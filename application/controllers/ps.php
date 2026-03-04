@@ -469,12 +469,199 @@ switch ($action) {
         }
         break;
 
+        case 'request_form':
+            $item_id = isset($routes['2']) ? (int)$routes['2'] : 0;
+            $item = ORM::for_table('sys_items')->find_one($item_id);
+            if(!$item){
+                echo 'Item not found';
+                break;
+            }
+            // Only branch users (non super-admin) can request
+            if($user->roleid == 0 || empty($user->branch_id)){
+                echo 'Only branch users can request stock';
+                break;
+            }
+            $ui->assign('item', $item);
+            $ui->assign('to_branch_id', $user->branch_id);
+            $ui->display('stock-request-form.tpl');
+        break;
+
+        case 'request_post':
+            header('Content-Type: application/json; charset=utf-8');
+            if($user->roleid == 0 || empty($user->branch_id)){
+                echo json_encode(['status' => 'error', 'message' => 'Only branch users can request stock']);
+                break;
+            }
+            $item_id = (int) _post('item_id');
+            $qty = (float) _post('qty');
+            $note = trim(_post('note'));
+            if($item_id <= 0 || $qty <= 0){
+                echo json_encode(['status' => 'error', 'message' => 'Invalid product or quantity']);
+                break;
+            }
+            $item = ORM::for_table('sys_items')->find_one($item_id);
+            if(!$item){
+                echo json_encode(['status' => 'error', 'message' => 'Product not found']);
+                break;
+            }
+            $req = ORM::for_table('sys_stock_requests')->create();
+            $req->item_id = $item_id;
+            $req->to_branch_id = $user->branch_id;
+            $req->requested_qty = $qty;
+            $req->requested_by = $user->id;
+            $req->status = 'pending';
+            $req->note = $note;
+            $req->created_at = date('Y-m-d H:i:s');
+            $req->updated_at = $req->created_at;
+            $req->save();
+            _log("Stock request #{$req->id} created for item {$item_id} qty {$qty}",'Admin',$user['id']);
+            echo json_encode(['status' => 'success', 'message' => 'Request submitted', 'request_id' => $req->id]);
+        break;
+
+        case 'request_list':
+            $is_super = ($user->roleid == 0);
+            $status = _get('status');
+            // Default: show all statuses so nothing is hidden by default
+            if(!$status){
+                $status = 'all';
+            }
+
+            $q = ORM::for_table('sys_stock_requests')->order_by_desc('id');
+            if(!$is_super){
+                // branch user sees only their own requests
+                $q->where('requested_by', $user->id);
+            }
+            if($status != 'all'){
+                $q->where('status', $status);
+            }
+            $requests = $q->find_array();
+
+            if($is_super){
+                // attach branch stock map for each request's item
+                foreach ($requests as &$r) {
+                    $stock_map = product_stock_info_by_branch($r['item_id']);
+                    $r['branch_stock_json'] = json_encode($stock_map);
+                }
+                unset($r);
+            }
+
+            $branches = ORM::for_table('sys_accounts')->order_by_asc('account')->find_array();
+
+            $ui->assign('status_filter', $status);
+            $ui->assign('branches', $branches);
+            $ui->assign('requests', $requests);
+            $ui->assign('is_super', $is_super);
+            $ui->assign('xheader', Asset::css(['modal']));
+            $ui->assign('xfooter', Asset::js(['modal']));
+            $ui->display('stock-request-list.tpl');
+        break;
+
+        case 'my_requests':
+            if($user->roleid == 0){
+                r2(U."ps/request_list/");
+            } else {
+                r2(U."ps/request_list/?status=all");
+            }
+        break;
+
+        case 'request_fulfill':
+            header('Content-Type: application/json; charset=utf-8');
+            if($user->roleid != 0){
+                echo json_encode(['status' => 'error', 'message' => 'You do not have permission']);
+                break;
+            }
+            $req_id = (int) _post('request_id');
+            $from_branch = (int) _post('from_branch');
+            $ship_qty = (float) _post('ship_qty');
+            $note = trim(_post('note'));
+
+            $req = ORM::for_table('sys_stock_requests')->find_one($req_id);
+            if(!$req || $req->status != 'pending'){
+                echo json_encode(['status' => 'error', 'message' => 'Request not found or already processed']);
+                break;
+            }
+            if($from_branch == $req->to_branch_id){
+                echo json_encode(['status' => 'error', 'message' => 'From and To branch cannot be the same']);
+                break;
+            }
+            if($ship_qty <= 0){
+                echo json_encode(['status' => 'error', 'message' => 'Quantity must be greater than zero']);
+                break;
+            }
+
+            // Check stock in source branch
+            $available = ORM::for_table('sys_items_stock')
+                ->select_expr("COALESCE(SUM(CASE WHEN type='credit' THEN stock ELSE 0 END),0) - COALESCE(SUM(CASE WHEN type='debit' THEN stock ELSE 0 END),0)", 'available')
+                ->where('item_id', $req->item_id)
+                ->where('branch_id', $from_branch)
+                ->find_one();
+            $available_stock = $available ? (float) $available->available : 0;
+            if($available_stock < $ship_qty){
+                echo json_encode(['status' => 'error', 'message' => "Not enough stock. Available: {$available_stock}"]);
+                break;
+            }
+
+            $transfer_ref = 'TRF-' . date('Ymd-His') . '-REQ' . $req_id;
+            stock_record($req->item_id, $ship_qty, 'debit', '', '', '', '', $from_branch, $transfer_ref, $req_id);
+            stock_record($req->item_id, $ship_qty, 'credit', '', '', '', '', $req->to_branch_id, $transfer_ref, $req_id);
+
+            $req->shipped_qty = $ship_qty;
+            $req->from_branch_id = $from_branch;
+            $req->transfer_ref = $transfer_ref;
+            $req->fulfilled_by = $user->id;
+            $req->status = 'fulfilled'; // close after first fulfillment per requirement
+            $req->note = $note;
+            $req->updated_at = date('Y-m-d H:i:s');
+            $req->save();
+
+            _log("Stock request #{$req_id} fulfilled qty {$ship_qty} (ref {$transfer_ref})",'Admin',$user['id']);
+            echo json_encode(['status' => 'success', 'message' => "Fulfilled (Ref: {$transfer_ref})"]);
+        break;
+
+        case 'request_reject':
+            header('Content-Type: application/json; charset=utf-8');
+            if($user->roleid != 0){
+                echo json_encode(['status' => 'error', 'message' => 'You do not have permission']);
+                break;
+            }
+            $req_id = (int) _post('request_id');
+            $note = trim(_post('note'));
+            $req = ORM::for_table('sys_stock_requests')->find_one($req_id);
+            if(!$req || $req->status != 'pending'){
+                echo json_encode(['status' => 'error', 'message' => 'Request not found or already processed']);
+                break;
+            }
+            $req->status = 'rejected';
+            $req->note = $note;
+            $req->fulfilled_by = $user->id;
+            $req->updated_at = date('Y-m-d H:i:s');
+            $req->save();
+            _log("Stock request #{$req_id} rejected",'Admin',$user['id']);
+            echo json_encode(['status' => 'success', 'message' => 'Request rejected']);
+        break;
+
         case 'view':
             $id  = $routes['2'];
             //$stock = json_decode(product_stock_info($id, true));
             $item = ORM::for_table('sys_items')->find_one($id);
-            $credited_stock = ORM::for_table('sys_items_stock')->where('item_id', $id)->where('type', 'credit')->find_many();
-            $debited_stock = ORM::for_table('sys_items_stock')->where('item_id', $id)->where('type', 'debit')->find_many();
+            $is_super = ($user->roleid == 0);
+            $user_branch = $user->branch_id ?? null;
+
+            $credited_q = ORM::for_table('sys_items_stock')
+                ->where('item_id', $id)
+                ->where('type', 'credit');
+            $debited_q = ORM::for_table('sys_items_stock')
+                ->where('item_id', $id)
+                ->where('type', 'debit');
+
+            // Branch users should see only their branch rows
+            if(!$is_super && !empty($user_branch)){
+                $credited_q->where('branch_id', $user_branch);
+                $debited_q->where('branch_id', $user_branch);
+            }
+
+            $credited_stock = $credited_q->find_many();
+            $debited_stock  = $debited_q->find_many();
 
             $branch_stock = product_stock_info_by_branch($id);
             // Ensure every branch is represented (even if zero stock) for transfer UI
@@ -483,6 +670,13 @@ switch ($action) {
                 if (!isset($branch_stock[$branch['id']])) {
                     $branch_stock[$branch['id']] = 0;
                 }
+            }
+
+            // Limit visible branch stock for branch users
+            if(!$is_super && !empty($user_branch)){
+                $branch_stock = [
+                    $user_branch => $branch_stock[$user_branch] ?? 0
+                ];
             }
             // var_dump($branch_stock);
             // exit;
@@ -498,15 +692,21 @@ switch ($action) {
             $ui->assign('debited_stock', $debited_stock);
 
             // Fetch distinct transfer refs for this item
-            $refs = ORM::for_table('sys_items_stock')
+            $refs_query = ORM::for_table('sys_items_stock')
                 ->select('transfer_ref')
                 ->where('item_id', $id)
                 ->where_not_null('transfer_ref')
                 ->where_not_equal('transfer_ref', '')
                 ->group_by('transfer_ref')
                 ->order_by_desc('transfer_ref') // or order_by_desc('timestamp') if available
-                ->limit(50)
-                ->find_many();
+                ->limit(50);
+
+            // Branch users: only refs involving their branch
+            if(!$is_super && !empty($user_branch)){
+                $refs_query->where('branch_id', $user_branch);
+            }
+
+            $refs = $refs_query->find_many();
 
             $transfer_data = [];
 
@@ -524,6 +724,7 @@ switch ($action) {
                 $from_branch_id = $to_branch_id = null;
                 $qty = 0;
                 $date = null;
+                $request_id = null;
 
                 foreach ($entries as $e) {
                     // prefer debit as from and credit as to
@@ -533,6 +734,9 @@ switch ($action) {
                     }
                     if ($e->type == 'credit' && empty($to_branch_id)) {
                         $to_branch_id = $e->branch_id;
+                    }
+                    if (empty($request_id) && !empty($e->request_id)) {
+                        $request_id = $e->request_id;
                     }
 
                     // pick latest timestamp available for the ref
@@ -553,6 +757,7 @@ switch ($action) {
                     'to_branch_name' => $to_branch_name,
                     'qty' => $qty,
                     'date' => $date,
+                    'request_id' => $request_id,
                 ];
             }
 
@@ -586,16 +791,18 @@ switch ($action) {
             $entries = [];
             $from_name = $to_name = '';
             $qty = 0;
+            $request_id = null;
             foreach ($rows as $r) {
                 // try resolve branch name
                 $bname = get_branch_name($r->branch_id, 'alias') ?: null;
 
-                $entries[] = [
+                $entries[] = [  
                     'type' => $r->type,
                     'branch_id' => $r->branch_id,
                     'branch_name' => $bname,
                     'stock' => $r->stock,
                     'timestamp' => $r->timestamp,
+                    'request_id' => $r->request_id,
                 ];
 
                 if ($r->type == 'debit') {
@@ -605,6 +812,9 @@ switch ($action) {
                 if ($r->type == 'credit') {
                     $to_name = $bname ?: $r->branch_id;
                 }
+                if (empty($request_id) && !empty($r->request_id)) {
+                    $request_id = $r->request_id;
+                }
             }
 
             echo json_encode([
@@ -612,6 +822,7 @@ switch ($action) {
                 'from_name' => $from_name,
                 'to_name' => $to_name,
                 'qty' => $qty,
+                'request_id' => $request_id,
                 'entries' => $entries
             ]);
         break;
@@ -1218,6 +1429,11 @@ switch ($action) {
         break;
 
     case 'transfer_post':
+        // Only super admin can perform direct transfers
+        if($user->roleid != 0){
+            echo json_encode(['status' => 'error', 'message' => $_L['You do not have permission']]);
+            exit;
+        }
         $item_id = _post('item_id');
         $from_branch = _post('from_branch');
         $to_branch = _post('to_branch');
