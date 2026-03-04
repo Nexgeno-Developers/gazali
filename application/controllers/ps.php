@@ -961,8 +961,13 @@ switch ($action) {
         $data = [];
         $serial = $start + 1;
         foreach ($rows as $r) {
-            $stock_info = json_decode(product_stock_info($r['id']), true);
-            $stock = isset($stock_info['current_stock_count']) ? $stock_info['current_stock_count'] : 0;
+            if ($user->roleid == 0) {
+                $stock_info = json_decode(product_stock_info($r['id']), true);
+                $stock = isset($stock_info['current_stock_count']) ? $stock_info['current_stock_count'] : 0;
+            } else {
+                $branch_stocks = product_stock_info_by_branch($r['id']);
+                $stock = isset($branch_stocks[$user->branch_id]) ? $branch_stocks[$user->branch_id] : 0;
+            }
             $stock_label = $stock . ' ' . $r['product_stock_type'];
 
             $img_link = (!empty($r['product_image'])) ? '<a target="_blank" href="'.$r['product_image'].'">View</a>' : '-';
