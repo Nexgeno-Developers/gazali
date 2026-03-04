@@ -196,6 +196,21 @@ $(function(){
         }        
     }
 
+    function refreshFilterSalesPersons(branchId) {
+        $.post(base_url + 'invoices/get-branch-sales-persons/', {
+            branch_id: branchId || '',
+            for_filter: 1
+        }).done(function(html) {
+            $('#sales_person').html('<option value="">All</option>' + html);
+        });
+    }
+
+    refreshFilterSalesPersons($branchSelect.val());
+
+    $branchSelect.on('change', function() {
+        refreshFilterSalesPersons($(this).val());
+    });
+
     // helper: serialize form to object
     $.fn.serializeObject = function(){
         var o = {};
@@ -300,6 +315,7 @@ $(function(){
     // Reset filters
     $('#btnInvoiceReset').on('click', function(){
         $('#invoiceFilters')[0].reset();
+        refreshFilterSalesPersons($branchSelect.val());
         table.ajax.reload();
     });
 

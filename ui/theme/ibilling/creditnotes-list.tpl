@@ -14,6 +14,7 @@
                     <thead>
                         <tr>
                             <th data-sort-ignore="true">#</th>
+                            <th>Return Invoice No.</th>
                             <th>Customer</th>
                             <th>Date</th>
                             <th class="text-right">Total</th>
@@ -25,6 +26,7 @@
                     {foreach $d as $cn}
                         <tr>
                             <td>{$cn.id}</td>
+                            <td>{$cn.creditnotenum|default:''}</td>
                             <td>{$cn.account}</td>
                             <td>{$cn.date}</td>
                             <td class="text-right"><span class="amount">{$cn.total}</span></td>

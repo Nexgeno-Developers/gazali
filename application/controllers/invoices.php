@@ -4806,6 +4806,7 @@ $(".cdelete").click(function (e) {
 
             $branch_id   = _post('branch_id');
             $selected_id = (int) _post('selected');
+            $for_filter  = _post('for_filter');
 
             $sales_users_q = ORM::for_table('sys_users')
                 ->select('id')
@@ -4821,6 +4822,8 @@ $(".cdelete").click(function (e) {
                         $sales_users_q->where('branch_id', $branch_id);
                         $sales_users_q->where_not_equal('id', $user->id);
                     }
+                } else if ($for_filter) {
+                    // Filter page: return all sales persons when no branch selected
                 } else {
                     $sales_users_q->where('id', $user->id);
                 }
