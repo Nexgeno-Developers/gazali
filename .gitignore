@@ -1,2 +1,6 @@
 /.htaccess
 /logs
+storage
+*.zip
+*.sql
+*.tar.gz
