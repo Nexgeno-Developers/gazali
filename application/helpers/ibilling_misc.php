@@ -1282,14 +1282,29 @@ function get_designs()
     return $designs;
 }
 
-include 'third_party/phpqrcode/qrlib.php';
+$ibilling_barcode_base = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'third_party' . DIRECTORY_SEPARATOR . 'phpbarcode' . DIRECTORY_SEPARATOR . 'BarcodeCode128.php';
+if (is_file($ibilling_barcode_base)) {
+    require_once $ibilling_barcode_base;
+}
 
+/**
+ * Generate a 1D barcode (Code 128) PNG for the given text.
+ * Saves to ui/lib/imgs/qrcode/ for compatibility with existing "View" links.
+ * Returns the file path or empty string on failure.
+ *
+ * @param string $text Data to encode (e.g. "P-123", "G-456")
+ * @return string Path to PNG file or ''
+ */
 function qrcode_generate($text)
 {
-    $path = 'ui/lib/imgs/qrcode/';
+    $text = (string) $text;
+    if ($text === '') {
+        return '';
+    }
+    $basePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR;
+    $path = $basePath . 'ui' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'imgs' . DIRECTORY_SEPARATOR . 'qrcode' . DIRECTORY_SEPARATOR;
     $file = $path . $text . '.png';
 
-    // Ensure output directory exists before generating the file.
     if (!is_dir($path) && !@mkdir($path, 0775, true)) {
         return '';
     }
@@ -1298,16 +1313,20 @@ function qrcode_generate($text)
         return '';
     }
 
-    $ecc = 'L';
-    $pixel_Size = 4;
-    $frame_Size = 1;
-
-    // Generate QR only when file is missing to reduce repeated writes.
-    if (!file_exists($file)) {
-        QRcode::png($text, $file, $ecc, $pixel_Size, $frame_Size);
+    if (!class_exists('BarcodeCode128', false)) {
+        return '';
     }
 
-    return file_exists($file) ? $file : '';
+    // Generate barcode only when file is missing to reduce repeated writes.
+    if (!file_exists($file)) {
+        BarcodeCode128::savePng($text, $file, 2, 50, 10);
+    }
+
+    if (!file_exists($file)) {
+        return '';
+    }
+    // Return path relative to document root for use in HTML (img src, links)
+    return 'ui/lib/imgs/qrcode/' . $text . '.png';
 }
 
 function wati_notifiation($name, $invoicenumber, $paymentstatus, $orderstatus, $ordertrack_url, $phone){

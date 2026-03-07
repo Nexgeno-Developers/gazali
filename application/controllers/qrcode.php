@@ -47,7 +47,7 @@
      padding-left: 4px;
 }
     .qrcode_box img {
-        width: 50px;
+        width: 130px;
         margin-left:auto;
         display:block;
         margin-right:auto;
@@ -199,7 +199,14 @@ function getItemNames($jsonData) {
 switch ($action){    
     case 'fetch':
         $i=0;
-        $search = isset($_GET['search']) ? $_GET['search'] : null;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        // Generate barcode on-demand when opening View link (e.g. search=P-17.png) so file exists
+        if ($search !== '' && $search !== null) {
+            $code = pathinfo($search, PATHINFO_FILENAME);
+            if ($code !== '') {
+                qrcode_generate($code);
+            }
+        }
         foreach(glob('ui/lib/imgs/qrcode/*') as $filename){
 
             $image_name = explode('.', basename($filename));

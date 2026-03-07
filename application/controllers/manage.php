@@ -381,7 +381,7 @@ switch ($action) {
             $first_img = (is_array($images) && !empty($images[0])) ? $images[0] : '';
             $img_link = $first_img ? '<a target="_blank" href="'.$first_img.'">View</a>' : '-';
 
-            $qr_image = qrcode_generate('D-' . $r['id']);
+            $qr_image = qrcode_generate('G-' . $r['id']);
             $qr_link = !empty($qr_image)
                 ? '<a target="_blank" href="'. U .'qrcode/fetch&search='.basename($qr_image).'">View</a>'
                 : '-';
