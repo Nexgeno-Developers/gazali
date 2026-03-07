@@ -71,14 +71,14 @@ require ('application_installer_config.php'); ?>
             <div class="form-group">
                 <label class="control-label col-sm-3" for="password">Choose Password:</label>
                 <div class="col-sm-9">
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" autocomplete="off" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="control-label col-sm-3" for="confirm_password">Confirm Password:</label>
                 <div class="col-sm-9">
-                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Re Enter password" required>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Re Enter password" autocomplete="off" required>
                 </div>
             </div>
 

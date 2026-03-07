@@ -123,7 +123,7 @@
                     <div class="form-group"><label class="col-lg-2 control-label" for="password">{$_L['Password']} </label>
 
                         <div class="col-lg-10">
-                            <input type="password" id="password" name="password" class="form-control">
+                            <input type="password" id="password" name="password" class="form-control" autocomplete="off">
 
                             <span class="help-block">{$_L['password_change_help']}</span>
 

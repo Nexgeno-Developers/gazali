@@ -243,14 +243,15 @@
 
                             <div class="form-group hide"><label class="col-md-4 control-label" for="password">{$_L['Password']}</label>
 
-                                <div class="col-lg-8"><input type="password" id="password" name="password" class="form-control">
-
+                                <div class="col-lg-8">
+                                    <input type="password" id="password" name="password" class="form-control" autocomplete="off" value="12345678">
                                 </div>
                             </div>
 
                             <div class="form-group hide"><label class="col-md-4 control-label" for="cpassword">{$_L['Confirm Password']}</label>
 
-                                <div class="col-lg-8"><input type="password" id="cpassword" name="cpassword" class="form-control">
+                                <div class="col-lg-8">
+                                    <input type="password" id="cpassword" name="cpassword" class="form-control" autocomplete="off" value="12345678">
 
                                 </div>
                             </div>

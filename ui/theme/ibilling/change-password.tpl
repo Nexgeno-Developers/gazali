@@ -12,15 +12,15 @@
                 <form role="form" name="accadd" method="post" action="{$_url}settings/change-password-post">
                     <div class="form-group">
                         <label for="password">{$_L['Current Password']}</label>
-                        <input type="password" class="form-control" id="password" name="password">
+                        <input type="password" class="form-control" id="password" name="password" autocomplete="off">
                     </div>
                     <div class="form-group">
                         <label for="npass">{$_L['New Password']}</label>
-                        <input type="password" class="form-control" id="npass" name="npass">
+                        <input type="password" class="form-control" id="npass" name="npass" autocomplete="off">
                     </div>
                     <div class="form-group">
                         <label for="cnpass">{$_L['Confirm New Password']}</label>
-                        <input type="password" class="form-control" id="cnpass" name="cnpass">
+                        <input type="password" class="form-control" id="cnpass" name="cnpass" autocomplete="off">
                     </div>
 
 

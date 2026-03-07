@@ -17,7 +17,7 @@
 
 		<div class="ibox float-e-margins">
 			<div class="ibox-content">			
-				<h3>Designs used in Invoices</h3>
+				<h3>Gift Boxes used in Invoices</h3>
 				<table class="table table-bordered sys_table">
                     <th>#</th>
                     <th>Invoice</th>

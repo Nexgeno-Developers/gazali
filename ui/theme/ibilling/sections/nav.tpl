@@ -122,6 +122,12 @@
     {$admin_extra_nav[3]}
     {*<li {if $_application_menu eq 'tasks'}class="active"{/if}><a href="{$_url}tasks/me"><i class="fa fa-tasks"></i> <span class="nav-label">Tasks</span></a></li>*}
 
+    {if has_access($user->roleid,'collection')}
+        <li {if $_application_menu eq 'collection'}class="active"{/if}>
+            <a href="{$_url}branch_collections/list/"><i class="fa fa-archive"></i><span class="nav-label">Collection</span></a>
+        </li>
+    {/if}
+
     {if has_access($user->roleid,'sales')}
 
         {if ($_c['invoicing'] eq '1') OR ($_c['quotes'] eq '1')}
@@ -158,7 +164,6 @@
         {/if}
 
     {/if}
-
 
 
     {if has_access($user->roleid,'calendar')}
@@ -388,11 +393,7 @@
     {/if}
 
 
-    {if has_access($user->roleid,'collection')}
-        <li {if $_application_menu eq 'collection'}class="active"{/if}>
-            <a href="{$_url}branch_collections/list/"><i class="fa fa-archive"></i><span class="nav-label">Collection</span></a>
-        </li>
-    {/if}
+
 
 
 </ul>

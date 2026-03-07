@@ -993,7 +993,7 @@ switch ($action) {
                 number_format((float)$r['purchase_price'], 2, '.', ''),
                 number_format((float)$r['sales_price'], 2, '.', ''),
                 $stock_label,
-                !empty($r['product_category']) ? str_replace('_', ' ', $r['product_category']) : '-',
+                !empty($r['product_category']) ? ucwords(str_replace('_', ' ', $r['product_category'])) : '-',
                 $img_link,
                 $desc,
                 $qr_link,

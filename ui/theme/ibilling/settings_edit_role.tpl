@@ -35,29 +35,33 @@
 
                                 {foreach $permissions as $permission}
                                     {if $permission.status == 1}
-                                        <tr data-id="{$permission['id']}">
-                                            <td class="bold">{$permission['pname']}</td>
-                                            <td class="text-center">
-                                                <div class="checkbox">
-                                                    <div class="i-checks"><label  style="padding-left: 0"> <input name="{$permission['shortname']}_view" class="ib_checkbox" type="checkbox" value="yes" {if Misc::check_permission_by_role_id($role->id,$permission['id'],'view')}checked{/if}></label></div>
-                                                </div>
-                                            </td>
-                                            <td class="text-center hide">
-                                                <div class="checkbox">
-                                                    <div class="i-checks"><label> <input name="{$permission['shortname']}_edit" class="ib_checkbox" type="checkbox" value="yes" checked></label></div>
-                                                </div>
-                                            </td>
-                                            <td class="text-center hide">
-                                                <div class="checkbox">
-                                                    <div class="i-checks"><label> <input name="{$permission['shortname']}_create" class="ib_checkbox" type="checkbox" value="yes" checked></label></div>
-                                                </div>
-                                            </td>
-                                            <td class="text-center hide">
-                                                <div class="checkbox checkbox-danger">
-                                                    <div class="i-checks"><label> <input name="{$permission['shortname']}_delete" class="ib_checkbox" type="checkbox" value="yes" checked></label></div>
-                                                </div>
-                                            </td>
-                                        </tr>
+
+                                        {if $permission['id'] != 20}
+                                            <tr data-id="{$permission['id']}">
+                                                <td class="bold">{$permission['pname']}</td>
+                                                <td class="text-center">
+                                                    <div class="checkbox">
+                                                        <div class="i-checks"><label  style="padding-left: 0"> <input name="{$permission['shortname']}_view" class="ib_checkbox" type="checkbox" value="yes" {if Misc::check_permission_by_role_id($role->id,$permission['id'],'view')}checked{/if}></label></div>
+                                                    </div>
+                                                </td>
+
+                                                <td class="text-center hide">
+                                                    <div class="checkbox">
+                                                        <div class="i-checks"><label> <input name="{$permission['shortname']}_edit" class="ib_checkbox" type="checkbox" value="yes" checked></label></div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center hide">
+                                                    <div class="checkbox">
+                                                        <div class="i-checks"><label> <input name="{$permission['shortname']}_create" class="ib_checkbox" type="checkbox" value="yes" checked></label></div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center hide">
+                                                    <div class="checkbox checkbox-danger">
+                                                        <div class="i-checks"><label> <input name="{$permission['shortname']}_delete" class="ib_checkbox" type="checkbox" value="yes" checked></label></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {/if}
                                     {/if}
                                 {/foreach}
 

@@ -176,6 +176,26 @@ $action = route(1);
 //     break;
 // }
 
+
+function getItemNames($jsonData) {
+    $items = json_decode($jsonData, true);
+    $names = [];
+
+    if (!empty($items)) {
+        foreach ($items as $item) {
+            $data = ORM::for_table('sys_items')
+                ->select('name')
+                ->find_one($item['item_id']);
+
+            if ($data) {
+                $names[] = $data->name;
+            }
+        }
+    }
+
+    return $names;
+}
+
 switch ($action){    
     case 'fetch':
         $i=0;
@@ -214,12 +234,34 @@ switch ($action){
                          $design = ORM::for_table('sys_designs')->find_one($id);
                          $name = $design['name'];
                          
-                         $fabrics   = json_decode($design['fabrics'], true);
-                         $stones    = json_decode($design['stones'], true);
-                         $handworks = json_decode($design['handworks'], true);
-                         $others    = json_decode($design['others'], true);
-                         $cloth     = ORM::for_table('sys_cloths')->find_one($design['cloth_id']);
-                         $clothName = $cloth['name'];
+                        //  $fabrics   = json_decode($design['fabrics'], true);
+                        //  $stones    = json_decode($design['stones'], true);
+                        //  $handworks = json_decode($design['handworks'], true);
+                        //  $others    = json_decode($design['others'], true);
+
+                        $attar     = json_decode($design['attar'], true);
+                        $perfume   = json_decode($design['perfume'], true);
+                        $gift_box  = json_decode($design['gift_box'], true);
+                        $all_over_body_spry = json_decode($design['all_over_body_spry'], true);
+                        $room_freshenar = json_decode($design['room_freshenar'], true);
+                        $perfume_tester = json_decode($design['perfume_tester'], true);
+                        $agarwood = json_decode($design['agarwood'], true);
+                        $khalata = json_decode($design['khalata'], true);
+                        $dhanalood = json_decode($design['dhanalood'], true);
+
+                        $cloth     = ORM::for_table('sys_cloths')->find_one($design['cloth_id']);
+
+                        $attar_names = getItemNames($design['attar']);
+                        $perfume_names = getItemNames($design['perfume']);
+                        $gift_box_names = getItemNames($design['gift_box']);
+                        $all_over_body_spry_names = getItemNames($design['all_over_body_spry']);
+                        $room_freshenar_names = getItemNames($design['room_freshenar']);
+                        $perfume_tester_names = getItemNames($design['perfume_tester']);
+                        $agarwood_names = getItemNames($design['agarwood']);
+                        $khalata_names = getItemNames($design['khalata']);
+                        $dhanalood_names = getItemNames($design['dhanalood']);
+
+                        $clothName = $cloth['name'];
 
                          $sales_price = array();
                          
@@ -248,16 +290,52 @@ switch ($action){
                          }
                          $sales_price[] = $design['price'];
                          $sales_price = array_sum($sales_price);
-                         
+
+                            $html = '';
+
+                            if (!empty($attar_names)) {
+                                $html .= '<div><b>Attar - </b>'.implode(', ', $attar_names).'</div>';
+                            }
+
+                            if (!empty($perfume_names)) {
+                                $html .= '<div><b>Perfume - </b>'.implode(', ', $perfume_names).'</div>';
+                            }
+
+                            if (!empty($gift_box_names)) {
+                                $html .= '<div><b>Gift Box - </b>'.implode(', ', $gift_box_names).'</div>';
+                            }
+
+                            if (!empty($all_over_body_spry_names)) {
+                                $html .= '<div><b>All Over Body Spray - </b>'.implode(', ', $all_over_body_spry_names).'</div>';
+                            }
+
+                            if (!empty($room_freshenar_names)) {
+                                $html .= '<div><b>Room Freshener - </b>'.implode(', ', $room_freshenar_names).'</div>';
+                            }
+
+                            if (!empty($perfume_tester_names)) {
+                                $html .= '<div><b>Perfume Tester - </b>'.implode(', ', $perfume_tester_names).'</div>';
+                            }
+
+                            if (!empty($agarwood_names)) {
+                                $html .= '<div><b>Agarwood - </b>'.implode(', ', $agarwood_names).'</div>';
+                            }
+
+                            if (!empty($khalata_names)) {
+                                $html .= '<div><b>Khalata - </b>'.implode(', ', $khalata_names).'</div>';
+                            }
+
+                            if (!empty($dhanalood_names)) {
+                                $html .= '<div><b>Dhanalood - </b>'.implode(', ', $dhanalood_names).'</div>';
+                            }
+
                             echo 
                             '
                                 <div class="qrcode_box">
                                     <div class="name_number"><b>'.ucfirst($image_name[0]).'</b></div>
                                     <div class="cmp_name" style="margin-top:13px;"><b>'.$name.'</b></div>
                                     <div><b>Product Type - </b><br>'.$clothName.'</div>
-                                    <div><b>Fabric - </b><br>'.implode(',', $fabricNames).'</div>
-                                    <div><b>Stone Color & Size - </b><br>'.implode(',', $stoneNames).'</div>
-                                    <div><b>Handwork Materials - </b><br>'.implode(',', $handworkNames).'</div>
+                                    '.$html.'
                                     <div class="price_font" style="margin-top:13px;"><b>₹'.$sales_price.'</b></div>
                                     <div class="qrcode_img"><img src="'.$filename.'"></div>
                                 </div>

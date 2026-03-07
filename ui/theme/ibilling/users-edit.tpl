@@ -96,13 +96,13 @@
 
                     <div class="form-group">
                         <label for="password">{$_L['Password']}</label>
-                        <input type="password" class="form-control" id="password" name="password">
+                        <input type="password" class="form-control" id="password" name="password" autocomplete="off">
                         <span class="help-block">{$_L['password_change_help']}</span>
                     </div>
 
                     <div class="form-group">
                         <label for="cpassword">{$_L['Confirm Password']}</label>
-                        <input type="password" class="form-control" id="cpassword" name="cpassword">
+                        <input type="password" class="form-control" id="cpassword" name="cpassword" autocomplete="off">
                     </div>
 
                     <input type="hidden" name="id" value="{$d['id']}">

@@ -77,11 +77,11 @@
                             </div>
                             <div class="form-group">
                                 <label for="password" class="control-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" placeholder="******">
+                                <input type="password" class="form-control" id="password" name="password" placeholder="******" autocomplete="off">
                             </div>
                             <div class="form-group">
                                 <label for="password2" class="control-label">Confirm Password</label>
-                                <input type="password" class="form-control" id="password2" name="password2" placeholder="******">
+                                <input type="password" class="form-control" id="password2" name="password2" placeholder="******" autocomplete="off">
                             </div>
 
                             {foreach $extra_fields as $field}
