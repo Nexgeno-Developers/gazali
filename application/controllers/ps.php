@@ -358,6 +358,11 @@ switch ($action) {
         if($purchase_price == ''){
             $msg .= 'Purchase price is required <br>';
         }
+
+        if($branch_id == ''){
+            $msg .= 'Branch is required <br>';
+        }
+
         if($product_stock == ''){
             $msg .= 'Stock is required <br>';
         }
@@ -869,7 +874,7 @@ switch ($action) {
             r2(U."dashboard",'e',$_L['You do not have permission']);
         }
 
-        $product_type = (!empty($_GET['product_type'])) ? $_GET['product_type'] : 'readymade';
+        $product_type = (!empty($_GET['product_type'])) ? $_GET['product_type'] : 'all';
 
         // Collect distinct product categories for filter dropdown
         $categories = ORM::for_table('sys_items')

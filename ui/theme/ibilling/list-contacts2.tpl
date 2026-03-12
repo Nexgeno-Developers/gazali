@@ -11,7 +11,9 @@
                             <select id="filter_branch" class="form-control">
                                 <option value="all">All Branches</option>
                                 {foreach $branches as $b}
-                                    <option value="{$b.id}" {if $user.branch_id eq $b.id}selected{/if}>{$b.alias}</option>
+                                    <option value="{$b.id}" {if $user.branch_id == $b.id && $user.roleid != 0}selected="selected"{/if}>
+                                        {$b.alias}
+                                    </option>
                                 {/foreach}
                             </select>
                         </div>
