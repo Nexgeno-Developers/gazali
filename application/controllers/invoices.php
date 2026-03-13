@@ -32,10 +32,18 @@ switch ($action) {
         Event::trigger('add_invoice');
 
         $cloths = ORM::for_table('sys_cloths')->find_many();
-        $ui->assign('cloths', $cloths); 
-        
-        $designs = ORM::for_table('sys_designs')->find_many();
-        $ui->assign('designs', $designs);        
+        $ui->assign('cloths', $cloths);
+
+        // Branch-aware designs list (admin sees all, staff see only own branch)
+        if ((int) $user->roleid === 0) {
+            $designs = ORM::for_table('sys_designs')->find_many();
+        } else {
+            $designs = ORM::for_table('sys_designs')
+                ->where('branch_id', $user->branch_id)
+                ->find_many();
+        }
+
+        $ui->assign('designs', $designs);
 
         $ui->assign('extra_fields', $extra_fields);
 
@@ -207,10 +215,17 @@ $(document).ready(function () {
         if ($d) {
 
             $cloths = ORM::for_table('sys_cloths')->find_many();
-            $ui->assign('cloths', $cloths); 
-            
-            $designs = ORM::for_table('sys_designs')->find_many();
-            $ui->assign('designs', $designs);            
+            $ui->assign('cloths', $cloths);
+
+            // Branch-aware designs list for edit as well
+            if ((int) $user->roleid === 0) {
+                $designs = ORM::for_table('sys_designs')->find_many();
+            } else {
+                $designs = ORM::for_table('sys_designs')
+                    ->where('branch_id', $user->branch_id)
+                    ->find_many();
+            }
+            $ui->assign('designs', $designs);
 
             $currencies = Model::factory('Models_Currency')->find_array();
             $ui->assign('currencies', $currencies);
@@ -4853,7 +4868,16 @@ $(".cdelete").click(function (e) {
 
 
         $id = $_POST['cloth_id'];
-        $designs = ORM::for_table('sys_designs')->where('cloth_id', $id)->find_many();
+
+        // Branch-aware designs list when filtering by cloth
+        $designs_q = ORM::for_table('sys_designs')
+            ->where('cloth_id', $id);
+
+        if ((int) $user->roleid !== 0 && !empty($user->branch_id)) {
+            $designs_q->where('branch_id', $user->branch_id);
+        }
+
+        $designs = $designs_q->find_many();
 
         $options = '<option value="">Select Gift Box</option>';
         foreach($designs as $row)

@@ -665,8 +665,9 @@ switch ($action) {
                 $debited_q->where('branch_id', $user_branch);
             }
 
-            $credited_stock = $credited_q->find_many();
-            $debited_stock  = $debited_q->find_many();
+            // Always show most recent stock movements first
+            $credited_stock = $credited_q->order_by_desc('id')->find_many();
+            $debited_stock  = $debited_q->order_by_desc('id')->find_many();
 
             $branch_stock = product_stock_info_by_branch($id);
             // Ensure every branch is represented (even if zero stock) for transfer UI
@@ -696,14 +697,15 @@ switch ($action) {
             $ui->assign('credited_stock', $credited_stock);
             $ui->assign('debited_stock', $debited_stock);
 
-            // Fetch distinct transfer refs for this item
+            // Fetch distinct transfer refs for this item, newest first
             $refs_query = ORM::for_table('sys_items_stock')
                 ->select('transfer_ref')
+                ->select_expr('MAX(id)', 'max_id')
                 ->where('item_id', $id)
                 ->where_not_null('transfer_ref')
                 ->where_not_equal('transfer_ref', '')
                 ->group_by('transfer_ref')
-                ->order_by_desc('transfer_ref') // or order_by_desc('timestamp') if available
+                ->order_by_desc('max_id')
                 ->limit(50);
 
             // Branch users: only refs involving their branch

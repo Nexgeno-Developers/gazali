@@ -192,30 +192,51 @@
 
 
     {$admin_extra_nav[5]}
+     
+    {if has_access($user->roleid,'products_n_services') || has_access($user->roleid,'products_n_categories')}
 
-    {if has_access($user->roleid,'products_n_services')}
+        {if $_c['invoicing'] == '1' || $_c['quotes'] == '1'}
+            <li class="{if $_application_menu == 'ps'}active{/if}">
+                <a href="#">
+                    <i class="fa fa-cube"></i> 
+                    <span class="nav-label">Manage Products</span>
+                    <span class="fa arrow"></span>
+                </a>
 
-    {if ($_c['invoicing'] eq '1') OR ($_c['quotes'] eq '1')}
-        <li class="{if $_application_menu eq 'ps'}active{/if}">
-            <a href="#"><i class="fa fa-cube"></i> <span class="nav-label">Manage Products</span><span class="fa arrow"></span></a>
-            <ul class="nav nav-second-level">
-                {if $user->roleid eq 0}
-                    <li><a href="{$_url}ps/p-new/">Add Product</a></li>
-                {/if}
-                <li><a href="{$_url}ps/p-list/">List Product</a></li>
+                <ul class="nav nav-second-level">
 
-                {if has_access($user->roleid,'products_n_categories')}
-                <li><a href="{$_url}ps/category-list/">Product Categories</a></li>
-                {/if}
+                    {if $user->roleid == 0}
+                        <li><a href="{$_url}ps/p-new/">Add Product</a></li>
+                    {/if}
 
-                <li><a href="{$_url}ps/my_requests">{if $user->roleid != 0} My Requests {else} Stock Requests {/if}</a></li>
-                <!--<li><a href="{$_url}ps/s-list/">{$_L['Services']}</a></li>
-                <li><a href="{$_url}ps/s-new/">{$_L['New Service']}</a></li>-->
+                    {if has_access($user->roleid,'products_n_services')}
+                        <li><a href="{$_url}ps/p-list/">List Product</a></li>
+                    {/if}
 
+                    {if has_access($user->roleid,'products_n_categories')}
+                        <li><a href="{$_url}ps/category-list/">Product Categories</a></li>
+                    {/if}
 
-            </ul>
-        </li>
-    {/if}
+                    {if has_access($user->roleid,'products_n_services')}
+                        <li>
+                            <a href="{$_url}ps/my_requests">
+                                {if $user->roleid != 0}
+                                    My Requests
+                                {else}
+                                    Stock Requests
+                                {/if}
+                            </a>
+                        </li>
+                    {/if}
+
+                    <!--
+                    <li><a href="{$_url}ps/s-list/">{$_L['Services']}</a></li>
+                    <li><a href="{$_url}ps/s-new/">{$_L['New Service']}</a></li>
+                    -->
+
+                </ul>
+            </li>
+        {/if}
 
     {/if}
 

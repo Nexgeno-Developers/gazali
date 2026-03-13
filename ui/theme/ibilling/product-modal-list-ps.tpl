@@ -70,8 +70,15 @@
                                 <td>{$ds['description']}</td>
                                 <td class="price">{$ds['sales_price']}</td>
                                 <td>
-                                    {$stock = json_decode(product_stock_info($ds['id']), true)}
-                                    {$stock['current_stock_count']} {$ds['product_stock_type']} 
+                                    {if $user->roleid eq 0}
+                                        {* Admin: show total stock across all branches *}
+                                        {$stock = json_decode(product_stock_info($ds['id']), true)}
+                                        {$stock['current_stock_count']} {$ds['product_stock_type']}
+                                    {else}
+                                        {* Branch user: show only this branch's stock *}
+                                        {$branchStock = product_stock_info_by_branch($ds['id'])}
+                                        {$branchStock[$user.branch_id]|default:0} {$ds['product_stock_type']}
+                                    {/if}
                                 </td>                               
                             </tr>
                             {/foreach} 
@@ -129,8 +136,13 @@
                                 <td>{$ds['description']}</td>
                                 <td class="price">{$ds['sales_price']}</td>
                                 <td>
-                                    {$stock = json_decode(product_stock_info($ds['id']), true)}
-                                    {$stock['current_stock_count']} {$ds['product_stock_type']} 
+                                    {if $user->roleid eq 0}
+                                        {$stock = json_decode(product_stock_info($ds['id']), true)}
+                                        {$stock['current_stock_count']} {$ds['product_stock_type']}
+                                    {else}
+                                        {$branchStock = product_stock_info_by_branch($ds['id'])}
+                                        {$branchStock[$user.branch_id]|default:0} {$ds['product_stock_type']}
+                                    {/if}
                                 </td>
                             </tr>
                             {/foreach} 
