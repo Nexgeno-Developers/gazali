@@ -54,57 +54,64 @@ switch ($action) {
 */
     case 'crm-user':
         $id = $routes['2'];
-        $id = str_replace('uid','',$id);
-        $d = ORM::for_table('crm_accounts')->find_one($id);
+        $id = str_replace('uid','', $id);
+        $d  = ORM::for_table('crm_accounts')->find_one($id);
 
-        if(!$d){
-            echo json_encode(['success'=>false, 'message'=>'Contact not found']);
+        if (!$d) {
+            echo json_encode(['success' => false, 'message' => 'Contact not found']);
             exit;
         }
 
-        // Collect counts
-        $counts = [
-            'Invoices'       => ORM::for_table('sys_invoices')->where('userid', $id)->count(),
-            'Invoice Items'  => ORM::for_table('sys_invoiceitems')->where('userid', $id)->count(),
-            'Transactions'   => ORM::for_table('sys_transactions')
-                                ->where_any_is([
-                                    ['vendor_id' => $id],
-                                    ['payerid'  => $id],
-                                    ['payeeid'  => $id]
-                                ])->count(),
-            'Invoice Allocation'    => ORM::for_table('invoice_alocation')->where('employee_id', $id)->count(),
-            'Timesheets'     => ORM::for_table('crm_timesheet')->where('employee_id', $id)->count()
-        ];
+        // --- Hard guards: do not allow deleting a customer
+        //     that is referenced in invoices or transactions.
+        $invoiceCount = ORM::for_table('sys_invoices')
+            ->where('userid', $id)
+            ->count();
 
-        // Build list of blocking records
-        $blocking = [];
-        foreach($counts as $type => $count){
-            if($count > 0){
-                $blocking[] = $type;
+        $transactionCount = ORM::for_table('sys_transactions')
+            ->where_any_is([
+                ['payerid' => $id],
+                ['payeeid' => $id],
+            ])
+            ->count();
+
+        if ($invoiceCount > 0 || $transactionCount > 0) {
+            // Build clear, user‑friendly error messages.
+            if ($invoiceCount > 0 && $transactionCount > 0) {
+                $msg = 'This contact cannot be deleted because it has '
+                     . $invoiceCount . ' linked invoice(s) and '
+                     . $transactionCount . ' linked transaction(s). '
+                     . 'Please delete or reassign those records first.';
+            } elseif ($invoiceCount > 0) {
+                $msg = 'This contact cannot be deleted because it has '
+                     . $invoiceCount . ' linked invoice(s). '
+                     . 'Please delete or reassign those invoices first.';
+            } else {
+                $msg = 'This contact cannot be deleted because it has '
+                     . $transactionCount . ' linked transaction(s) '
+                     . 'as payer or payee. Please delete or reassign those transactions first.';
             }
-        }
 
-        if(!empty($blocking)){
-            $message = 'Cannot delete this contact. Linked record(s) exist: ' . implode(', ', $blocking) . '.';
-            echo json_encode(['success'=>false, 'message'=>$message]);
+            echo json_encode(['success' => false, 'message' => $msg]);
             exit;
         }
 
-
-        // Delete all activity
-        ORM::for_table('sys_activity')->where('cid',$id)->delete_many();
+        // Optional: still clean up related activity safely.
+        ORM::for_table('sys_activity')
+            ->where('cid', $id)
+            ->delete_many();
 
         $username = $d->account;
         $d->delete();
 
-        _log('Contact Deleted: '.$username,'Admin',$user['id']);
+        _log('Contact Deleted: ' . $username, 'Admin', $user['id']);
 
         echo json_encode([
-            'success'=>true,
-            'message'=>'Contact Deleted Successfully'
+            'success' => true,
+            'message' => 'Contact Deleted Successfully',
         ]);
 
-    break;
+        break;
 
     case 'domain-n-hosting':
     $id = $routes['2'];

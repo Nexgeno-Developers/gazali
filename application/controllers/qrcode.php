@@ -230,7 +230,7 @@ switch ($action){
                             <div class="qrcode_box">
                                 <div class="name_number"><b>'.ucfirst($image_name[0]).'</b></div>
                                 <div class="cmp_name"><b>'.$name.'</b></div>
-                                <div class="price_font"><b>₹'.$sales_price.'</b></div>
+                                <div class="price_font"><b>QAR '.$sales_price.'</b></div>
                                 <div><img src="'.$filename.'"></div>
                             </div>
                         ';                           
@@ -343,7 +343,7 @@ switch ($action){
                                     <div class="cmp_name" style="margin-top:13px;"><b>'.$name.'</b></div>
                                     <div><b>Product Type - </b><br>'.$clothName.'</div>
                                     '.$html.'
-                                    <div class="price_font" style="margin-top:13px;"><b>₹'.$sales_price.'</b></div>
+                                    <div class="price_font" style="margin-top:13px;"><b>QAR '.$sales_price.'</b></div>
                                     <div class="qrcode_img"><img src="'.$filename.'"></div>
                                 </div>
                             '
